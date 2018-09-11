@@ -35,3 +35,5 @@ javabbob/
 .project
 .classpath
 .settings/
+
+src/
