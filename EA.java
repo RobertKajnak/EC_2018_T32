@@ -60,38 +60,34 @@ public class EA {
 
     public void evaluateFitness(ContestEvaluation evaluationOperator) {
         for (Individual individual: this.population) {
-            double fitness = (double) evaluationOperator.evaluate(individual.getCoords());
+            double[] coords = individual.getCoords();
+            double fitness = (double) evaluationOperator.evaluate(coords);
             individual.setFitness(fitness);
         }
     }
 
     ///creates a new mutated individual, based on itself. Rates are taken from the host population
-    private ArrayList<Individual> applyMutation(ArrayList<Individual> parents) {
+    private Individual applyMutation(Individual child) {
 
-        for (int i=0; i<parents.size(); i++) {
+        double[] coords = child.getCoords();
+        double[] mutatedCoords = new double[10]; 
 
-            double[] coords = parents.get(i).getCoords();
-            double[] mutatedCoords = new double[10]; 
-
-            for (int j=0;j<10;j++) {
-                if (this.RNG.nextDouble() < this.mutationRate) {
-                    mutatedCoords[j] = coords[j] + this.RNG.nextDouble() * this.mutationSwing;
-                }
-                else {
-                    mutatedCoords[j] = coords[j];
-                }
+        for (int j=0;j<10;j++) {
+            if (this.RNG.nextDouble() < this.mutationRate) {
+                mutatedCoords[j] = coords[j] + this.RNG.nextDouble() * this.mutationSwing;
             }
-
-            parents.set(i, new Individual(mutatedCoords));
+            else {
+                mutatedCoords[j] = coords[j];
+            }
         }
 
-        return parents;
+        Individual mutatedChild = new Individual(mutatedCoords);
+        
+        return mutatedChild;
     }
 
     ///Creates two new children based on two individuals given, using crossover
     private Pair<Individual,Individual> applyCrossover(Individual parent_1, Individual parent_2) {
-
-        this.RNG.nextInt(10); // What is this line for?
 
         double childCoords_1[] = new double[10];
         double childCoords_2[] = new double[10];
@@ -124,7 +120,6 @@ public class EA {
     private ArrayList<Individual> selectParents(int numParents) {
 
         if (!sorted) sortByFitness();
-        System.out.println(this.population.toString());
 
         ArrayList<Individual> parents = new ArrayList<Individual>(this.population.subList(0, numParents));
 
@@ -134,9 +129,10 @@ public class EA {
     private void applyReplacement() {
         // Sort again :( the population --> !!! PERFORMANCE !!!
         this.sortByFitness();
-        // Keep constant the number of Individual inside the population
 
+        // Keep constant the number of Individual inside the population
         this.population = new ArrayList<Individual>(this.population.subList(0, this.populationSize));
+
     }
 
     ///Make fittest individuals reproduce and keep best parents. Any excess inidividuals are killed, in order of fitness.
@@ -146,9 +142,6 @@ public class EA {
 
         int numParents = (int) (this.populationSize * this.parentsRatio);
         ArrayList<Individual> parents = this.selectParents(numParents);
-        
-        // mutate parents
-        parents = this.applyMutation(parents);
         
         // Since parents are sorted by fitness, 
         // coupling them sequencially means to couple
@@ -165,8 +158,10 @@ public class EA {
             Individual parent_1 = parents.get(i);
             Individual parent_2 = parents.get(i+1);
             Pair offspring = applyCrossover(parent_1, parent_2);
-            this.population.add((Individual) offspring.first());
-            this.population.add((Individual) offspring.second());
+            Individual child_1 = applyMutation((Individual) offspring.first());
+            Individual child_2 = applyMutation((Individual) offspring.second());
+            this.population.add(child_1);
+            this.population.add(child_2);
         }
 
         this.applyReplacement();

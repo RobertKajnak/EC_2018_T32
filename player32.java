@@ -54,33 +54,38 @@ public class player32 implements ContestSubmission
         int evals = 0;
         // init Evolutionary Algorithm
 
-		int populationSize = 100;
-		double mutationRate = 0.03;
+		int populationSize = 300;
+		double mutationRate = 0.03; // the higher, the more the chance to mutate individuals.
 		double mutationSwing = 0.5;
 		double parentsRatio = 0.7;
-		double parentsSurvivalRatio = 0.15;
+		double parentsSurvivalRatio = 0.15; // It is not used currently.
 
 		// for now, let's stick with 100. Other population sizes should be justified.
         EA simplestEA = new EA(populationSize, mutationRate, mutationSwing, parentsRatio, parentsSurvivalRatio); 
 		simplestEA.initialize();
 
-        // calculate fitness
+		// calculate fitness
         while(evals<evaluations_limit_){
             // Select parents
             // Apply crossover / mutation operators
 
 			simplestEA.reproduce();
+			simplestEA.evaluateFitness(evaluation_);
 
             double child[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
             // Check fitness of unknown fuction
             //Double fitness = (double) evaluation_.evaluate(child);
 
 			Individual best = simplestEA.getBestIndividual();
-			System.out.println("Best individual in generation evals: " + best.getFitness());
+
+			// it gives me a SecurityException regarding a class loader if I put these two sysout statements all together..
+			System.out.print("Best individual in generation evals: "); 
+			System.out.println(best.getFitness());
             
             evals++;
             // Select survivors
 		}
+		
 	}
 
 }
