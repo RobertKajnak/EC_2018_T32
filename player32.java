@@ -55,7 +55,7 @@ public class player32 implements ContestSubmission
         System.out.println("Evaluations Limit:" + evaluations_limit_);
         int evals = 0;
         // init population
-        Population population = new Population(100, 0.01, 0.5,.7,.15);
+        Population population = new Population(300, 0.03, 0.5,.7,.15);
         // calculate fitness
         while(evals<evaluations_limit_){
             // Select parents
@@ -269,8 +269,8 @@ public class player32 implements ContestSubmission
 			
 			@Override
 			/// both the same fitness=>0
-			/// i.fitness<this.fitness => 1
-			/// i.fitness>this.fitness => -1
+			/// i.fitness<this.fitness => -1
+			/// i.fitness>this.fitness => 1
 			public int compareTo(Individual i) {
 				return this.fitness==i.fitness?0:i.fitness>this.fitness?1:-1;
 			}
