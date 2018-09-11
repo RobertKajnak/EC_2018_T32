@@ -29,3 +29,9 @@ libcjavabbob.dylib
 cjavabbob.dll
 tmp/
 javabbob/
+
+
+#Eclipse specific files
+.project
+.classpath
+.settings/
