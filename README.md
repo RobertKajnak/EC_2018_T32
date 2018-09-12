@@ -2,7 +2,7 @@
 The great work of team 32
 
 # File location notice
-**To keep it as cross platform as possible, (e.g. Guiseppe had the player32.java in the parent directory, while in eclipse it goes under src/) I put the src/ in the gitignore.**   
+**To keep it as cross platform as possible, (e.g. Giuseppe had the player32.java in the parent directory, while in eclipse it goes under src/) I put the src/ in the gitignore.**   
 To circumvent this create a symbolic link to the parent directory;
 In Windows:
 1. cd to the src/
