@@ -26,6 +26,8 @@ public class EA {
 
         this.RNG = new Random();
         this.sorted = false;
+
+        this.initialize();
     }
 
     public void setMutationRate(double value) {
@@ -150,7 +152,7 @@ public class EA {
         // Therefore, I shuffle the parents' array to 
         // break this simmetry.
 
-        Collections.shuffle(parents);
+        // Collections.shuffle(parents);
 
         // Then, the approach of Robert is fine, provided that mod(numParents, 2) = 0.
         // If mod(numParents, 2) != 0, then a parent does not contribute to reproduction.

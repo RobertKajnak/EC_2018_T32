@@ -64,7 +64,6 @@ public class player32 implements ContestSubmission
 
 		// for now, let's stick with 100. Other population sizes should be justified.
         EA simplestEA = new EA(populationSize, mutationRate, mutationSwing, parentsRatio, parentsSurvivalRatio); 
-		simplestEA.initialize();
 
 		// calculate fitness
         while(evals < (int)evaluations_limit_/populationSize) {
