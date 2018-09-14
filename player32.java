@@ -49,12 +49,14 @@ public class player32 implements ContestSubmission
 	
     
 	public void run() {
+
+		
 		// Run your algorithm here
         // System.out.println("Evaluations Limit:" + evaluations_limit_);
         int evals = 0;
         // init Evolutionary Algorithm
 
-		int populationSize = 300;
+		int populationSize = 100;
 		double mutationRate = 0.03; // the higher, the more the chance to mutate individuals.
 		double mutationSwing = 0.5;
 		double parentsRatio = 0.7;
@@ -65,7 +67,7 @@ public class player32 implements ContestSubmission
 		simplestEA.initialize();
 
 		// calculate fitness
-        while(evals<evaluations_limit_){
+        while(evals < (int)evaluations_limit_/populationSize) {
             // Select parents
             // Apply crossover / mutation operators
 
@@ -85,8 +87,6 @@ public class player32 implements ContestSubmission
             evals++;
             // Select survivors
 		}
-		
 	}
-
 }
 	
