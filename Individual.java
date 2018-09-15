@@ -3,9 +3,7 @@
 ///to accidentally change one, while the other remains unchanged
 class Individual implements Comparable<Individual>{
     public final double coords[];
-    public double fitness;    
-    ///Used to read relevant config such as mutation rate
-    // private final Population population; // DELETE
+    public double fitness;
     
     // Constructor. Initialize individual with provided coords.
     // Random coords are provided by the EA either during initialization
