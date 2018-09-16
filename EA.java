@@ -5,29 +5,32 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class EA {
-    private static int populationSize;
+    private int populationSize; ///@Guiseppe: Why did you make this single attribute static?
     private ArrayList<Individual> population;
     private double mutationRate;
     private double mutationSwing;
     private double parentsRatio; // percentage of individual that becomes a parent
     private double parentsSurvivalRatio; // percentage of parents that survive after replacement
     private Random RNG;
-    
-    // helper, to remove - we need high performance!
-    private Boolean sorted;
+    ContestEvaluation evaluation;
+    // helper, to remove - we need high performance! -- umm we don't really, the time limit is 12000ms (I double-checked) 
+    // and this does it under 150ms. "Premature optimization is the root of all evil" - Robert. I mean the note, I am not quoting myself :P
+    // Also, you already made a mistake because of this in select parents -- you weren't setting this flag
+    //private Boolean isSorted;
 
-    public EA(int populationSize, double mutationRate, double mutatationSwing, double parentsRatio, double parentsSurvivalRatio) {
-        this.populationSize = populationSize;
+    public EA(ContestEvaluation evaluation,int populationSize, double mutationRate, double mutationSwing, double parentsRatio, double parentsSurvivalRatio) {
+        this.evaluation = evaluation;
+    	this.populationSize = populationSize;
         this.population = new ArrayList<Individual>(populationSize);
         this.mutationRate = mutationRate;
         this.mutationSwing = mutationSwing;
-        this.parentsRatio = parentsRatio > 1 ? 1 : parentsRatio < 0 ? 0 : parentsSurvivalRatio;
+        this.parentsRatio = parentsRatio > 1 ? 1 : parentsRatio < 0 ? 0 : parentsRatio;
         this.parentsSurvivalRatio = parentsSurvivalRatio > 1 ? 1 : parentsSurvivalRatio < 0 ? 0 : parentsSurvivalRatio;
 
         this.RNG = new Random();
-        this.sorted = false;
+        //this.isSorted = false;
 
-        this.initialize();
+        this.fillEmptyIndividualSlots();
     }
 
     public void setMutationRate(double value) {
@@ -50,25 +53,15 @@ public class EA {
         return this.population;
     }
 
-    // for each individual, randomly sets its coordinates.
-    public ArrayList<Individual> initialize() {
-        for (int i=0; i<this.populationSize; i++) {
+    // fills in empty slots in the population with individuals
+    private void fillEmptyIndividualSlots() {
+        for (int i=this.population.size(); i<this.populationSize; i++) {
 
             double[] rndCoords = new double[10];
             for (int j=0; j<10; j++) 
                 rndCoords[j] = this.RNG.nextDouble()*10 - 5;
 
-            this.population.add(new Individual(rndCoords));
-        }
-
-        return this.population;
-    }
-
-    public void evaluateFitness(ContestEvaluation evaluationOperator) {
-        for (Individual individual: this.population) {
-            double[] coords = individual.getCoords();
-            double fitness = (double) evaluationOperator.evaluate(coords);
-            individual.setFitness(fitness);
+            this.population.add(new Individual(evaluation,rndCoords));
         }
     }
 
@@ -78,16 +71,17 @@ public class EA {
         double[] coords = child.getCoords();
         double[] mutatedCoords = new double[10]; 
 
-        for (int j=0;j<10;j++) {
+        for (int j=0;j<10;j++) { 
             if (this.RNG.nextDouble() < this.mutationRate) {
-                mutatedCoords[j] = coords[j] + this.RNG.nextDouble() * this.mutationSwing;
+                mutatedCoords[j] = coords[j] + (this.RNG.nextDouble() - 0.5) * this.mutationSwing;
+                mutatedCoords[j] = Math.min(5,Math.max(-5,mutatedCoords[j]));
             }
             else {
                 mutatedCoords[j] = coords[j];
             }
         }
 
-        Individual mutatedChild = new Individual(mutatedCoords);
+        Individual mutatedChild = new Individual(evaluation,mutatedCoords);
         
         return mutatedChild;
     }
@@ -115,16 +109,17 @@ public class EA {
             }
         }
 
-        Individual child_1 = new Individual(childCoords_1);
-        Individual child_2 = new Individual(childCoords_2);
+        Individual child_1 = new Individual(evaluation,childCoords_1);
+        Individual child_2 = new Individual(evaluation,childCoords_2);
 
         Pair<Individual, Individual> offspring = new Pair<Individual, Individual>(child_1, child_2);
         
         return offspring;
     }
 
+    ///TODO rename this based on the generation method
     private Pair<Individual, Individual> genOffspring(Individual parent_1, Individual parent_2) {
-        
+        //why are you torturing us with C style indexing? :(( even_with_autocomplete_it_s_annoying
         double fitness_1 = parent_1.getFitness();
         double fitness_2 = parent_2.getFitness(); 
         
@@ -147,8 +142,8 @@ public class EA {
             childCoords_2[i] = parentCoords_1[i]*weight_1*weigth_mutation + parentCoords_2[i]*weight_2*weigth_mutation;
         }
 
-        Individual child_1 = new Individual(childCoords_1);
-        Individual child_2 = new Individual(childCoords_2);
+        Individual child_1 = new Individual(evaluation,childCoords_1);
+        Individual child_2 = new Individual(evaluation,childCoords_2);
 
         Pair<Individual, Individual> offspring = new Pair<Individual, Individual>(child_1, child_2);
         
@@ -157,7 +152,12 @@ public class EA {
 
     private ArrayList<Individual> selectParents(int numParents) {
 
-        if (!sorted) sortByFitness();
+        //if (!isSorted) 
+        //{
+        	sortByFitness();
+        //	isSorted = true;
+        //}
+        	
 
         ArrayList<Individual> parents = new ArrayList<Individual>(this.population.subList(0, numParents));
 
@@ -165,22 +165,23 @@ public class EA {
     }
 
     public void applyReplacement() {
-        // Sort again :( the population --> !!! PERFORMANCE !!!
         this.sortByFitness();
 
-        // Keep constant the number of Individual inside the population
-        this.population = new ArrayList<Individual>(this.population.subList(0, this.populationSize));
+        /// Keep constant the number of Individual inside the population
+        /// It does work without the if statements, I left it there for clarity - Robert
+
 
     }
 
-    ///Make fittest individuals reproduce and keep best parents. Any excess inidividuals are killed, in order of fitness.
+    ///Make fitest individuals reproduce and keep best parents. Any excess inidividuals are killed, in order of fitness.
     ///NOTE: NEEDS to sorts the population twice, if the nr_parents+nr_survivors>pop_size. 
-    ////TODO Do something about the double sort, for both cases. Actually, since it doesn't invoke evaluate, it's not  that horrible
+    ////TODO Do something about the double sort, for both cases. Actually, since it doesn't invoke evaluate, it's not that horrible
     public void reproduce() {
 
-        Visualizer viz = new Visualizer();
+        //Visualizer viz = new Visualizer(); ///TODO why is this in reproduce?
 
         int numParents = (int) (this.populationSize * this.parentsRatio);
+        
         ArrayList<Individual> parents = this.selectParents(numParents);
         
         // Since parents are sorted by fitness, 
@@ -192,23 +193,24 @@ public class EA {
 
         Collections.shuffle(parents);
 
-        // Then, the approach of Robert is fine, provided that mod(numParents, 2) = 0.
+        // Then, the approach of Robert is fine, provided that mod(numParents, 2) = 0. 
         // If mod(numParents, 2) != 0, then a parent does not contribute to reproduction.
+        // +/-1  parent doesn't matter. Popsize is kept in check separately anyway - Robert
         // System.out.println("=============================================================");
-        for (int i=0; i<numParents-1; i++) {
-
+        for (int i=0; i<numParents-1; i+=2) {
             Individual parent_1 = parents.get(i);
             Individual parent_2 = parents.get(i+1);
 
             // Pair offspring = applyCrossover(parent_1, parent_2);
-            Pair offspring = genOffspring(parent_1, parent_2);
+            Pair<Individual, Individual> offspring = applyCrossover(parent_1, parent_2);
+            //Pair<Individual, Individual> offspring = genOffspring(parent_1, parent_2);
 
             Individual child_1 = (Individual) offspring.first();
             Individual child_2 = (Individual) offspring.second();
 
-            ArrayList<Individual> childList = new ArrayList<Individual>();
-            childList.add(child_1);
-            childList.add(child_2);
+            //ArrayList<Individual> childList = new ArrayList<Individual>();
+            //childList.add(child_1);
+            //childList.add(child_2);
             // viz.printCoords(childList);
 
             // mutate
@@ -220,10 +222,10 @@ public class EA {
         }
     }
 
-    /// !!! PERFORMANCE HERE DROPS DOWN !!! ///
+    /// !!! PERFORMANCE HERE DROPS DOWN !!! /// -- still not relevant
     public Individual getBestIndividual() {
-        if (!this.sorted)
-            this.sortByFitness();
+        //if (!this.isSorted)
+        this.sortByFitness();
 
         return this.population.get(0);
     }
@@ -231,7 +233,7 @@ public class EA {
     ///Wrapper function for sorting
     private void sortByFitness() {
         Collections.sort(this.population);
-        this.sorted = true;
+        //this.isSorted = true;
     }
 
 }
