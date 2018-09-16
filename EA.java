@@ -1,0 +1,237 @@
+import org.vu.contest.ContestEvaluation;
+
+import java.util.Random;
+import java.util.ArrayList;
+import java.util.Collections;
+
+public class EA {
+    private static int populationSize;
+    private ArrayList<Individual> population;
+    private double mutationRate;
+    private double mutationSwing;
+    private double parentsRatio; // percentage of individual that becomes a parent
+    private double parentsSurvivalRatio; // percentage of parents that survive after replacement
+    private Random RNG;
+    
+    // helper, to remove - we need high performance!
+    private Boolean sorted;
+
+    public EA(int populationSize, double mutationRate, double mutatationSwing, double parentsRatio, double parentsSurvivalRatio) {
+        this.populationSize = populationSize;
+        this.population = new ArrayList<Individual>(populationSize);
+        this.mutationRate = mutationRate;
+        this.mutationSwing = mutationSwing;
+        this.parentsRatio = parentsRatio > 1 ? 1 : parentsRatio < 0 ? 0 : parentsSurvivalRatio;
+        this.parentsSurvivalRatio = parentsSurvivalRatio > 1 ? 1 : parentsSurvivalRatio < 0 ? 0 : parentsSurvivalRatio;
+
+        this.RNG = new Random();
+        this.sorted = false;
+
+        this.initialize();
+    }
+
+    public void setMutationRate(double value) {
+        this.mutationRate = value;
+    }
+
+    public double getMutationRate() {
+        return this.mutationRate;
+    }
+
+    public void setMutationSwing(double value) {
+        this.mutationRate = value;
+    }
+
+    public double getMutationSwing() {
+        return this.mutationSwing;
+    }
+
+    public ArrayList<Individual> getPopulation() {
+        return this.population;
+    }
+
+    // for each individual, randomly sets its coordinates.
+    public ArrayList<Individual> initialize() {
+        for (int i=0; i<this.populationSize; i++) {
+
+            double[] rndCoords = new double[10];
+            for (int j=0; j<10; j++) 
+                rndCoords[j] = this.RNG.nextDouble()*10 - 5;
+
+            this.population.add(new Individual(rndCoords));
+        }
+
+        return this.population;
+    }
+
+    public void evaluateFitness(ContestEvaluation evaluationOperator) {
+        for (Individual individual: this.population) {
+            double[] coords = individual.getCoords();
+            double fitness = (double) evaluationOperator.evaluate(coords);
+            individual.setFitness(fitness);
+        }
+    }
+
+    ///creates a new mutated individual, based on itself. Rates are taken from the host population
+    private Individual applyMutation(Individual child) {
+
+        double[] coords = child.getCoords();
+        double[] mutatedCoords = new double[10]; 
+
+        for (int j=0;j<10;j++) {
+            if (this.RNG.nextDouble() < this.mutationRate) {
+                mutatedCoords[j] = coords[j] + this.RNG.nextDouble() * this.mutationSwing;
+            }
+            else {
+                mutatedCoords[j] = coords[j];
+            }
+        }
+
+        Individual mutatedChild = new Individual(mutatedCoords);
+        
+        return mutatedChild;
+    }
+
+    ///Creates two new children based on two individuals given, using crossover
+    private Pair<Individual,Individual> applyCrossover(Individual parent_1, Individual parent_2) {
+
+        double childCoords_1[] = new double[10];
+        double childCoords_2[] = new double[10];
+
+        //At least 1 gene splice
+        int crossoverPoint = 1 + this.RNG.nextInt(8);
+
+        double[] coords1 = parent_1.getCoords();
+        double[] coords2 = parent_2.getCoords();
+
+        for (int i=0;i<10;i++) {
+            if (i < crossoverPoint){
+                childCoords_1[i] = coords1[i];
+                childCoords_2[i] = coords2[i];
+            }
+            else {
+                childCoords_1[i] = coords2[i];
+                childCoords_2[i] = coords1[i];
+            }
+        }
+
+        Individual child_1 = new Individual(childCoords_1);
+        Individual child_2 = new Individual(childCoords_2);
+
+        Pair<Individual, Individual> offspring = new Pair<Individual, Individual>(child_1, child_2);
+        
+        return offspring;
+    }
+
+    private Pair<Individual, Individual> genOffspring(Individual parent_1, Individual parent_2) {
+        
+        double fitness_1 = parent_1.getFitness();
+        double fitness_2 = parent_2.getFitness(); 
+        
+        double weight_1 = (fitness_1 + 1e-6) / (2e-6 + fitness_1 + fitness_2);
+        double weight_2 = (fitness_2 + 1e-6)/ (2e-6 + fitness_1 + fitness_2);
+
+        // weighted average
+        double[] parentCoords_1 = parent_1.getCoords();
+        double[] parentCoords_2 = parent_2.getCoords();
+        double[] childCoords_1 = new double[10];
+        double[] childCoords_2 = new double[10];
+        double weigth_mutation;
+
+        for (int i=0; i<10; i++) {
+            weigth_mutation = 1 + (-1 + 2*RNG.nextDouble()) * 0.10;
+            childCoords_1[i] = parentCoords_1[i]*weight_1*weigth_mutation + parentCoords_2[i]*weight_2*weigth_mutation;
+        }
+        for (int i=0; i<10; i++) {
+            weigth_mutation = 1 + (-1 + 2*RNG.nextDouble()) * 0.1;
+            childCoords_2[i] = parentCoords_1[i]*weight_1*weigth_mutation + parentCoords_2[i]*weight_2*weigth_mutation;
+        }
+
+        Individual child_1 = new Individual(childCoords_1);
+        Individual child_2 = new Individual(childCoords_2);
+
+        Pair<Individual, Individual> offspring = new Pair<Individual, Individual>(child_1, child_2);
+        
+        return offspring;
+    }
+
+    private ArrayList<Individual> selectParents(int numParents) {
+
+        if (!sorted) sortByFitness();
+
+        ArrayList<Individual> parents = new ArrayList<Individual>(this.population.subList(0, numParents));
+
+        return parents;
+    }
+
+    public void applyReplacement() {
+        // Sort again :( the population --> !!! PERFORMANCE !!!
+        this.sortByFitness();
+
+        // Keep constant the number of Individual inside the population
+        this.population = new ArrayList<Individual>(this.population.subList(0, this.populationSize));
+
+    }
+
+    ///Make fittest individuals reproduce and keep best parents. Any excess inidividuals are killed, in order of fitness.
+    ///NOTE: NEEDS to sorts the population twice, if the nr_parents+nr_survivors>pop_size. 
+    ////TODO Do something about the double sort, for both cases. Actually, since it doesn't invoke evaluate, it's not  that horrible
+    public void reproduce() {
+
+        Visualizer viz = new Visualizer();
+
+        int numParents = (int) (this.populationSize * this.parentsRatio);
+        ArrayList<Individual> parents = this.selectParents(numParents);
+        
+        // Since parents are sorted by fitness, 
+        // coupling them sequencially means to couple
+        // the best one with the second-best and the 
+        // third-best with the fourth and so on. 
+        // Therefore, I shuffle the parents' array to 
+        // break this simmetry.
+
+        Collections.shuffle(parents);
+
+        // Then, the approach of Robert is fine, provided that mod(numParents, 2) = 0.
+        // If mod(numParents, 2) != 0, then a parent does not contribute to reproduction.
+        // System.out.println("=============================================================");
+        for (int i=0; i<numParents-1; i++) {
+
+            Individual parent_1 = parents.get(i);
+            Individual parent_2 = parents.get(i+1);
+
+            // Pair offspring = applyCrossover(parent_1, parent_2);
+            Pair offspring = genOffspring(parent_1, parent_2);
+
+            Individual child_1 = (Individual) offspring.first();
+            Individual child_2 = (Individual) offspring.second();
+
+            ArrayList<Individual> childList = new ArrayList<Individual>();
+            childList.add(child_1);
+            childList.add(child_2);
+            // viz.printCoords(childList);
+
+            // mutate
+            child_1 = applyMutation(child_1);
+            child_2 = applyMutation(child_2);
+
+            this.population.add(child_1);
+            this.population.add(child_2);
+        }
+    }
+
+    /// !!! PERFORMANCE HERE DROPS DOWN !!! ///
+    public Individual getBestIndividual() {
+        if (!this.sorted)
+            this.sortByFitness();
+
+        return this.population.get(0);
+    }
+
+    ///Wrapper function for sorting
+    private void sortByFitness() {
+        Collections.sort(this.population);
+        this.sorted = true;
+    }
+
+}
