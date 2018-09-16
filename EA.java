@@ -164,15 +164,6 @@ public class EA {
         return parents;
     }
 
-    public void applyReplacement() {
-        this.sortByFitness();
-
-        /// Keep constant the number of Individual inside the population
-        /// It does work without the if statements, I left it there for clarity - Robert
-
-
-    }
-
     ///Make fitest individuals reproduce and keep best parents. Any excess inidividuals are killed, in order of fitness.
     ///NOTE: NEEDS to sorts the population twice, if the nr_parents+nr_survivors>pop_size. 
     ////TODO Do something about the double sort, for both cases. Actually, since it doesn't invoke evaluate, it's not that horrible
@@ -197,6 +188,8 @@ public class EA {
         // If mod(numParents, 2) != 0, then a parent does not contribute to reproduction.
         // +/-1  parent doesn't matter. Popsize is kept in check separately anyway - Robert
         // System.out.println("=============================================================");
+
+        ArrayList<Individual> childList = new ArrayList<Individual>();
         for (int i=0; i<numParents-1; i+=2) {
             Individual parent_1 = parents.get(i);
             Individual parent_2 = parents.get(i+1);
@@ -208,7 +201,6 @@ public class EA {
             Individual child_1 = (Individual) offspring.first();
             Individual child_2 = (Individual) offspring.second();
 
-            //ArrayList<Individual> childList = new ArrayList<Individual>();
             //childList.add(child_1);
             //childList.add(child_2);
             // viz.printCoords(childList);
@@ -217,9 +209,26 @@ public class EA {
             child_1 = applyMutation(child_1);
             child_2 = applyMutation(child_2);
 
-            this.population.add(child_1);
-            this.population.add(child_2);
+            childList.add(child_1);
+            childList.add(child_2);
         }
+        
+        sortByFitness();
+        ///Add first the surviving parents;
+        this.population = new ArrayList<Individual>(this.population.subList(0, (int)(this.parentsSurvivalRatio*this.populationSize)));
+        
+        ///Add the new children
+        this.population.addAll(childList);
+        
+        ///If there are too many ppl cut the worst performing of
+        if (this.population.size()>populationSize){
+        	sortByFitness();
+        	this.population = new ArrayList<Individual>(this.population.subList(0,this.populationSize));
+        }
+        ///Otherwise fill the population with random new ppl
+        else if (this.population.size()<populationSize) {
+        	fillEmptyIndividualSlots();
+		}
     }
 
     /// !!! PERFORMANCE HERE DROPS DOWN !!! /// -- still not relevant
@@ -232,8 +241,8 @@ public class EA {
 
     ///Wrapper function for sorting
     private void sortByFitness() {
+    	///I tried going through the list and checking if it is already sorted, but it only increases execution time
         Collections.sort(this.population);
-        //this.isSorted = true;
     }
 
 }
