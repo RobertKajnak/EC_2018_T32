@@ -1,5 +1,3 @@
-import org.vu.contest.ContestEvaluation;
-
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,13 +10,14 @@ public class EA {
     private double parentsRatio; // percentage of individual that becomes a parent
     private double parentsSurvivalRatio; // percentage of parents that survive after replacement
     private Random RNG;
-    ContestEvaluation evaluation;
+    CompetitionCustomPack evaluation;
+    private Individual previousBest;
     // helper, to remove - we need high performance! -- umm we don't really, the time limit is 12000ms (I double-checked) 
     // and this does it under 150ms. "Premature optimization is the root of all evil" - Robert. I mean the note, I am not quoting myself :P
     // Also, you already made a mistake because of this in select parents -- you weren't setting this flag
     //private Boolean isSorted;
 
-    public EA(ContestEvaluation evaluation,int populationSize, double mutationRate, double mutationSwing, double parentsRatio, double parentsSurvivalRatio) {
+    public EA(CompetitionCustomPack evaluation,int populationSize, double mutationRate, double mutationSwing, double parentsRatio, double parentsSurvivalRatio) {
         this.evaluation = evaluation;
     	this.populationSize = populationSize;
         this.population = new ArrayList<Individual>(populationSize);
@@ -26,7 +25,8 @@ public class EA {
         this.mutationSwing = mutationSwing;
         this.parentsRatio = parentsRatio > 1 ? 1 : parentsRatio < 0 ? 0 : parentsRatio;
         this.parentsSurvivalRatio = parentsSurvivalRatio > 1 ? 1 : parentsSurvivalRatio < 0 ? 0 : parentsSurvivalRatio;
-
+        previousBest = null;
+        
         this.RNG = new Random();
         //this.isSorted = false;
 
@@ -118,8 +118,11 @@ public class EA {
     }
 
     ///TODO rename this based on the generation method
+    @SuppressWarnings("unused")
     private Pair<Individual, Individual> genOffspring(Individual parent_1, Individual parent_2) {
         //why are you torturing us with C style indexing? :(( even_with_autocomplete_it_s_annoying
+    	if (evaluation.evaluationsRemaining()<2)
+    		return null;
         double fitness_1 = parent_1.getFitness();
         double fitness_2 = parent_2.getFitness(); 
         
@@ -150,7 +153,7 @@ public class EA {
         return offspring;
     }
 
-    private ArrayList<Individual> selectParents(int numParents) {
+    private ArrayList<Individual> selectParents(int numParents) throws NotEnoughEvalutationsException {
 
         //if (!isSorted) 
         //{
@@ -167,7 +170,7 @@ public class EA {
     ///Make fitest individuals reproduce and keep best parents. Any excess inidividuals are killed, in order of fitness.
     ///NOTE: NEEDS to sorts the population twice, if the nr_parents+nr_survivors>pop_size. 
     ////TODO Do something about the double sort, for both cases. Actually, since it doesn't invoke evaluate, it's not that horrible
-    public void reproduce() {
+    public void reproduce() throws NotEnoughEvalutationsException {
 
         //Visualizer viz = new Visualizer(); ///TODO why is this in reproduce?
 
@@ -234,14 +237,28 @@ public class EA {
     /// !!! PERFORMANCE HERE DROPS DOWN !!! /// -- still not relevant
     public Individual getBestIndividual() {
         //if (!this.isSorted)
-        this.sortByFitness();
+        try {
+			this.sortByFitness();        
+			previousBest = this.population.get(0);
+	        return previousBest;
+		} catch (NotEnoughEvalutationsException e) {
+			return previousBest;
+		}
+        
 
-        return this.population.get(0);
     }
 
     ///Wrapper function for sorting
-    private void sortByFitness() {
+    private void sortByFitness() throws NotEnoughEvalutationsException {
     	///I tried going through the list and checking if it is already sorted, but it only increases execution time
+    	int cost=0;
+    	for (Individual ind : population) {
+    		if (!ind.isEvaluated()) {
+    			cost++;
+    		}
+    	}
+    	if (cost>evaluation.evaluationsRemaining())
+    		throw new NotEnoughEvalutationsException();
         Collections.sort(this.population);
     }
 

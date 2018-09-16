@@ -1,4 +1,3 @@
-import org.vu.contest.ContestEvaluation;
 
 ///I made it immutable for the time being for simplicity. Also, it's a nice thing to have :P
 ///On a more serious note, if the fitness and coord are final, it means that it is not possible 
@@ -7,12 +6,12 @@ class Individual implements Comparable<Individual>{
     private final double coords[];
     private double fitness;
     private boolean isSet=false;
-    private ContestEvaluation evaluation;
+    private CompetitionCustomPack evaluation;
     
     // Constructor. Initialize individual with provided coords.
     // Random coords are provided by the EA either during initialization
     // or during recombination.
-    public Individual(ContestEvaluation evaluation, double[] coords) {
+    public Individual(CompetitionCustomPack evaluation, double[] coords) {
     	this.evaluation = evaluation;
         this.coords = coords;
         this.isSet = false;
@@ -20,6 +19,10 @@ class Individual implements Comparable<Individual>{
 
     public double[] getCoords() {
         return this.coords;
+    }
+    
+    public boolean isEvaluated() {
+    	return isSet;
     }
 
     public double getFitness() {

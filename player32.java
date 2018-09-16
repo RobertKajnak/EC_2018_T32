@@ -2,13 +2,13 @@ import org.vu.contest.ContestSubmission;
 import org.vu.contest.ContestEvaluation;
 
 import java.util.Random;
-import java.util.Properties;
 
 public class player32 implements ContestSubmission
 {
 	Random rnd_;
+	//ContestEvaluation evaluation_;
+	CompetitionCustomPack evaluation;
 	ContestEvaluation evaluation_;
-    private int evaluations_limit_;
 	
 	public player32()
 	{
@@ -24,12 +24,12 @@ public class player32 implements ContestSubmission
 	public void setEvaluation(ContestEvaluation evaluation)
 	{
 		// Set evaluation problem used in the run
-		evaluation_ = evaluation;
-		
+		//evaluation_ = evaluation;
+		this.evaluation = new CompetitionCustomPack(evaluation);
 		// Get evaluation properties
-		Properties props = evaluation.getProperties();
+		//Properties props = evaluation.getProperties(); ///TODO - depr, no longer needed
         // Get evaluation limit
-        evaluations_limit_ = Integer.parseInt(props.getProperty("Evaluations"));
+        //evaluations_limit_ = Integer.parseInt(props.getProperty("Evaluations"));
 		// Property keys depend on specific evaluation
 		// E.g. double param = Double.parseDouble(props.getProperty("property_name"));
         
@@ -45,16 +45,13 @@ public class player32 implements ContestSubmission
             // Do sth else
         }*/
     }
-	
+
     
 	public void run() {
 
 		
 		// Run your algorithm here
-        // System.out.println("Evaluations Limit:" + evaluations_limit_);
-        int evals = 0;
         // init Evolutionary Algorithm
-
 		int populationSize = 100;
 		double mutationRate = 0.02; // the higher, the more the chance to mutate individuals.
 		double mutationSwing = 0.1;
@@ -62,15 +59,21 @@ public class player32 implements ContestSubmission
 		double parentsSurvivalRatio = 0.15; // It is not used currently.
 
 		// for now, let's stick with 100. Other population sizes should be justified.
-        EA simplestEA = new EA(evaluation_,populationSize, mutationRate, mutationSwing, parentsRatio, parentsSurvivalRatio); 
+		
+        EA simplestEA = new EA(evaluation,populationSize, mutationRate, mutationSwing, parentsRatio, parentsSurvivalRatio); 
 		//Visualizer viz = new Visualizer();
 
 		// calculate fitness
-        while(evals < (int)evaluations_limit_/populationSize) {
+        while(true) {
             // Select parents
             // Apply crossover / mutation operators
 
-			simplestEA.reproduce();
+			try {
+				simplestEA.reproduce();
+			} catch (NotEnoughEvalutationsException e) {
+				//System.out.println(evaluation_.getFinalResult());
+				break;
+			}
 
             // double child[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
             // Check fitness of unknown fuction
@@ -85,8 +88,7 @@ public class player32 implements ContestSubmission
 			// This could be useful for debugging purposes.
 			// viz.printCoords(simplestEA.getPopulation());
 			// System.out.println("\n-----------------------------------------------------------------------------\n");
-            
-            evals++;
+
             // Select survivors
 		}
 	}
