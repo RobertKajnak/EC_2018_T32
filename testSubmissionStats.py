@@ -33,7 +33,10 @@ if __name__ == "__main__":
     resRTTotal =0
     maxRT = -1;
     
+    print("Performing run: ",end='')
     for i in range(0,runs_count):
+        print(i+1,end='')
+        
         result = subprocess.run(["java","-jar","testrun.jar","-submission=player32","-evaluation=BentCigarFunction","-seed=1"],
                              universal_newlines=True,stderr=subprocess.PIPE,shell=True,stdout=subprocess.PIPE)
         
@@ -52,6 +55,14 @@ if __name__ == "__main__":
         resRTTotal += resRT
         if (resRT>maxRT):
             maxRT=resRT
+        
+        #I'm not importing math for this
+        if i<runs_count-1:
+            for j in range(0, 1 if i<9 else 2 if i<99 else 3):
+                print('\b',end='')
+        else:
+            print('... Finished!')
+        
         
     print("Avg. Runtime = %f ; Worst run = %f"%(resRTTotal/runs_count,maxRT))
     print("Avg. Result = %f; Minimum: %f; Maximum: %f"%(resValTotal/runs_count,minVal,maxVal))
