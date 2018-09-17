@@ -70,7 +70,7 @@ public class player32 implements ContestSubmission
 
 			try {
 				simplestEA.reproduce();
-			} catch (NotEnoughEvalutationsException e) {
+			} catch (NotEnoughEvaluationsException e) {
 				//System.out.println(evaluation_.getFinalResult());
 				break;
 			}

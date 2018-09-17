@@ -153,7 +153,7 @@ public class EA {
         return offspring;
     }
 
-    private ArrayList<Individual> selectParents(int numParents) throws NotEnoughEvalutationsException {
+    private ArrayList<Individual> selectParents(int numParents) throws NotEnoughEvaluationsException {
 
         //if (!isSorted) 
         //{
@@ -170,7 +170,7 @@ public class EA {
     ///Make fitest individuals reproduce and keep best parents. Any excess inidividuals are killed, in order of fitness.
     ///NOTE: NEEDS to sorts the population twice, if the nr_parents+nr_survivors>pop_size. 
     ////TODO Do something about the double sort, for both cases. Actually, since it doesn't invoke evaluate, it's not that horrible
-    public void reproduce() throws NotEnoughEvalutationsException {
+    public void reproduce() throws NotEnoughEvaluationsException {
 
         //Visualizer viz = new Visualizer(); ///TODO why is this in reproduce?
 
@@ -241,7 +241,7 @@ public class EA {
 			this.sortByFitness();        
 			previousBest = this.population.get(0);
 	        return previousBest;
-		} catch (NotEnoughEvalutationsException e) {
+		} catch (NotEnoughEvaluationsException e) {
 			return previousBest;
 		}
         
@@ -249,7 +249,7 @@ public class EA {
     }
 
     ///Wrapper function for sorting
-    private void sortByFitness() throws NotEnoughEvalutationsException {
+    private void sortByFitness() throws NotEnoughEvaluationsException {
     	///I tried going through the list and checking if it is already sorted, but it only increases execution time
     	int cost=0;
     	for (Individual ind : population) {
@@ -258,7 +258,7 @@ public class EA {
     		}
     	}
     	if (cost>evaluation.evaluationsRemaining())
-    		throw new NotEnoughEvalutationsException();
+    		throw new NotEnoughEvaluationsException();
         Collections.sort(this.population);
     }
 
