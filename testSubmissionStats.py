@@ -35,10 +35,10 @@ if __name__ == "__main__":
     
     print("Performing run: ",end='')
     for i in range(0,runs_count):
-        print(i+1,end='')
+        print(i+1,end='', flush=True)
         
         result = subprocess.run(["java","-jar","testrun.jar","-submission=player32","-evaluation=BentCigarFunction","-seed=1"],
-                             universal_newlines=True,stderr=subprocess.PIPE,shell=True,stdout=subprocess.PIPE)
+                                 universal_newlines=True,stderr=subprocess.PIPE,shell=True,stdout=subprocess.PIPE)
         
         indScore = result.stdout.find("Score:");
         resVal = (float)(result.stdout[indScore+7:indScore+13])
@@ -64,6 +64,6 @@ if __name__ == "__main__":
             print('... Finished!')
         
         
-    print("Avg. Runtime = %f ; Worst run = %f"%(resRTTotal/runs_count,maxRT))
-    print("Avg. Result = %f; Minimum: %f; Maximum: %f"%(resValTotal/runs_count,minVal,maxVal))
+    print("Avg. Runtime = {:5.2f}ms ; Worst run = {:5.2f}ms".format(resRTTotal/runs_count,maxRT))
+    print("Avg. Result = {:5.4f}; Minimum: {:5.4f}; Maximum: {:5.4f}".format(resValTotal/runs_count,minVal,maxVal))
     
