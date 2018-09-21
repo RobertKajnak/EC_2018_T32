@@ -6,7 +6,6 @@ import java.util.Random;
 public class player32 implements ContestSubmission
 {
 	Random rnd_;
-	//ContestEvaluation evaluation_;
 	CompetitionCustomPack evaluation;
 	ContestEvaluation evaluation_;
 	
@@ -45,51 +44,28 @@ public class player32 implements ContestSubmission
             // Do sth else
         }*/
     }
-
     
 	public void run() {
-
 		
-		// Run your algorithm here
-        // init Evolutionary Algorithm
 		int populationSize = 100;
 		double mutationRate = 0.02; // the higher, the more the chance to mutate individuals.
 		double mutationSwing = 0.1;
 		double parentsRatio = 0.7;
-		double parentsSurvivalRatio = 0.15; // It is not used currently.
+		double parentsSurvivalRatio = 0.15; // Currently, It is not used.
 
-		// for now, let's stick with 100. Other population sizes should be justified.
-		
         EA simplestEA = new EA(evaluation,populationSize, mutationRate, mutationSwing, parentsRatio, parentsSurvivalRatio); 
-		//Visualizer viz = new Visualizer();
 
 		// calculate fitness
-        while(true) {
-            // Select parents
-            // Apply crossover / mutation operators
+		try {
+        	while(true) {
 
-			try {
-				simplestEA.reproduce();
-			} catch (NotEnoughEvaluationsException e) {
-				//System.out.println(evaluation_.getFinalResult());
-				break;
+				simplestEA.evolve();
+				Individual best = simplestEA.getBestIndividual();
+
+				System.out.printf("Best individual in generation: Y = %6.4e\n", best.getFitness());
 			}
-
-            // double child[] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
-            // Check fitness of unknown fuction
-            //Double fitness = (double) evaluation_.evaluate(child);
-
-			Individual best = simplestEA.getBestIndividual();
-
-			// it gives me a SecurityException regarding a class loader if I put these two sysout statements all together.
-			// I did not get anything like that. Can anyone else confirm? - Robert
-			System.out.printf("Best individual in generation: Y = %6.4e\n", best.getFitness());
-
-			// This could be useful for debugging purposes.
-			// viz.printCoords(simplestEA.getPopulation());
-			// System.out.println("\n-----------------------------------------------------------------------------\n");
-
-            // Select survivors
+		} catch (NotEnoughEvaluationsException e) {
+			//System.out.println(evaluation_.getFinalResult());
 		}
 	}
 }

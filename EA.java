@@ -3,19 +3,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class EA {
-    private int populationSize; ///@Guiseppe: Why did you make this single attribute static?
+    private int populationSize;
     private ArrayList<Individual> population;
+    private ArrayList<Individual> parents;
+    private ArrayList<Individual> offspring;
     private double mutationRate;
     private double mutationSwing;
     private double parentsRatio; // percentage of individual that becomes a parent
     private double parentsSurvivalRatio; // percentage of parents that survive after replacement
     private Random RNG;
-    CompetitionCustomPack evaluation;
+    private CompetitionCustomPack evaluation; //
     private Individual previousBest;
-    // helper, to remove - we need high performance! -- umm we don't really, the time limit is 12000ms (I double-checked) 
-    // and this does it under 150ms. "Premature optimization is the root of all evil" - Robert. I mean the note, I am not quoting myself :P
-    // Also, you already made a mistake because of this in select parents -- you weren't setting this flag
-    //private Boolean isSorted;
 
     public EA(CompetitionCustomPack evaluation,int populationSize, double mutationRate, double mutationSwing, double parentsRatio, double parentsSurvivalRatio) {
         this.evaluation = evaluation;
@@ -65,178 +63,105 @@ public class EA {
         }
     }
 
-    ///creates a new mutated individual, based on itself. Rates are taken from the host population
-    private Individual applyMutation(Individual child) {
-
-        double[] coords = child.getCoords();
-        double[] mutatedCoords = new double[10]; 
-
-        for (int j=0;j<10;j++) { 
-            if (this.RNG.nextDouble() < this.mutationRate) {
-                mutatedCoords[j] = coords[j] + (this.RNG.nextDouble() - 0.5) * this.mutationSwing;
-                mutatedCoords[j] = Math.min(5,Math.max(-5,mutatedCoords[j]));
-            }
-            else {
-                mutatedCoords[j] = coords[j];
-            }
-        }
-
-        Individual mutatedChild = new Individual(evaluation,mutatedCoords);
-        
-        return mutatedChild;
+    public void evolve() throws NotEnoughEvaluationsException {
+        this.parents    = this.selectParents();
+        this.offspring  = this.recombine(this.parents);
+        this.offspring  = this.mutate(this.offspring);
+        this.population = this.selectSurvivors(this.parents, this.offspring);
     }
 
-    ///Creates two new children based on two individuals given, using crossover
-    private Pair<Individual,Individual> applyCrossover(Individual parent_1, Individual parent_2) {
+    private ArrayList<Individual> selectParents() throws NotEnoughEvaluationsException {
+        /*
+            Parents = the first K best individuals.
 
-        double childCoords_1[] = new double[10];
-        double childCoords_2[] = new double[10];
+            Available selection operators in Selector class
+        */
 
-        //At least 1 gene splice
-        int crossoverPoint = 1 + this.RNG.nextInt(8);
-
-        double[] coords1 = parent_1.getCoords();
-        double[] coords2 = parent_2.getCoords();
-
-        for (int i=0;i<10;i++) {
-            if (i < crossoverPoint){
-                childCoords_1[i] = coords1[i];
-                childCoords_2[i] = coords2[i];
-            }
-            else {
-                childCoords_1[i] = coords2[i];
-                childCoords_2[i] = coords1[i];
-            }
-        }
-
-        Individual child_1 = new Individual(evaluation,childCoords_1);
-        Individual child_2 = new Individual(evaluation,childCoords_2);
-
-        Pair<Individual, Individual> offspring = new Pair<Individual, Individual>(child_1, child_2);
-        
-        return offspring;
-    }
-
-    ///TODO rename this based on the generation method
-    @SuppressWarnings("unused")
-    private Pair<Individual, Individual> genOffspring(Individual parent_1, Individual parent_2) {
-        //why are you torturing us with C style indexing? :(( even_with_autocomplete_it_s_annoying
-    	if (evaluation.evaluationsRemaining()<2)
-    		return null;
-        double fitness_1 = parent_1.getFitness();
-        double fitness_2 = parent_2.getFitness(); 
-        
-        double weight_1 = (fitness_1 + 1e-6) / (2e-6 + fitness_1 + fitness_2);
-        double weight_2 = (fitness_2 + 1e-6)/ (2e-6 + fitness_1 + fitness_2);
-
-        // weighted average
-        double[] parentCoords_1 = parent_1.getCoords();
-        double[] parentCoords_2 = parent_2.getCoords();
-        double[] childCoords_1 = new double[10];
-        double[] childCoords_2 = new double[10];
-        double weigth_mutation;
-
-        for (int i=0; i<10; i++) {
-            weigth_mutation = 1 + (-1 + 2*RNG.nextDouble()) * 0.10;
-            childCoords_1[i] = parentCoords_1[i]*weight_1*weigth_mutation + parentCoords_2[i]*weight_2*weigth_mutation;
-        }
-        for (int i=0; i<10; i++) {
-            weigth_mutation = 1 + (-1 + 2*RNG.nextDouble()) * 0.1;
-            childCoords_2[i] = parentCoords_1[i]*weight_1*weigth_mutation + parentCoords_2[i]*weight_2*weigth_mutation;
-        }
-
-        Individual child_1 = new Individual(evaluation,childCoords_1);
-        Individual child_2 = new Individual(evaluation,childCoords_2);
-
-        Pair<Individual, Individual> offspring = new Pair<Individual, Individual>(child_1, child_2);
-        
-        return offspring;
-    }
-
-    private ArrayList<Individual> selectParents(int numParents) throws NotEnoughEvaluationsException {
-
-        //if (!isSorted) 
-        //{
-        	sortByFitness();
-        //	isSorted = true;
-        //}
-        	
-
+        this.sortByFitness();
+        int numParents = (int) (this.populationSize * this.parentsRatio);
         ArrayList<Individual> parents = new ArrayList<Individual>(this.population.subList(0, numParents));
 
-        return parents;
+        return parents; 
     }
 
-    ///Make fitest individuals reproduce and keep best parents. Any excess inidividuals are killed, in order of fitness.
-    ///NOTE: NEEDS to sorts the population twice, if the nr_parents+nr_survivors>pop_size. 
-    ////TODO Do something about the double sort, for both cases. Actually, since it doesn't invoke evaluate, it's not that horrible
-    public void reproduce() throws NotEnoughEvaluationsException {
+    private ArrayList<Individual> recombine(ArrayList<Individual> parents) {
+        /*
+            ### OLD VERSION ###
+            Since parents are sorted by fitness, 
+            coupling them sequencially means to couple
+            the best one with the second-best and the 
+            third-best with the fourth and so on. 
+            Therefore, I shuffle the parents' array to 
+            break this simmetry.
 
-        //Visualizer viz = new Visualizer(); ///TODO why is this in reproduce?
+            Collections.shuffle(parents);
 
-        int numParents = (int) (this.populationSize * this.parentsRatio);
+            ### NEW VERSION ###
+            parents are picked randomly for each child.
+            The number of child is equal to the number of parents.
+
+            Available crossover operators in Recombinator class
+        */
+
+        offspring = new ArrayList<Individual>();
         
-        ArrayList<Individual> parents = this.selectParents(numParents);
-        
-        // Since parents are sorted by fitness, 
-        // coupling them sequencially means to couple
-        // the best one with the second-best and the 
-        // third-best with the fourth and so on. 
-        // Therefore, I shuffle the parents' array to 
-        // break this simmetry.
+        int numChildren = (int) (this.populationSize * this.parentsRatio);
+        for (int i=0; i<numChildren; i++) {
+            Individual mom = parents.get(this.RNG.nextInt(numChildren));
+            Individual dad = parents.get(this.RNG.nextInt(numChildren));
 
-        Collections.shuffle(parents);
+            Pair<double[], double[]> offspring_coords = Recombinator.onePointCrossover(mom, dad);
 
-        // Then, the approach of Robert is fine, provided that mod(numParents, 2) = 0. 
-        // If mod(numParents, 2) != 0, then a parent does not contribute to reproduction.
-        // +/-1  parent doesn't matter. Popsize is kept in check separately anyway - Robert
-        // System.out.println("=============================================================");
+            offspring.add(new Individual(this.evaluation, offspring_coords.first()));
+            offspring.add(new Individual(this.evaluation, offspring_coords.second()));
+        }
 
-        ArrayList<Individual> childList = new ArrayList<Individual>();
-        for (int i=0; i<numParents-1; i+=2) {
-            Individual parent_1 = parents.get(i);
-            Individual parent_2 = parents.get(i+1);
+        return offspring;
+    }
 
-            // Pair offspring = applyCrossover(parent_1, parent_2);
-            Pair<Individual, Individual> offspring = applyCrossover(parent_1, parent_2);
-            //Pair<Individual, Individual> offspring = genOffspring(parent_1, parent_2);
+    private ArrayList<Individual> mutate(ArrayList<Individual> offspring) {
 
-            Individual child_1 = (Individual) offspring.first();
-            Individual child_2 = (Individual) offspring.second();
+        /*
+            Available mutation oparators in Mutator class
+        */
 
-            //childList.add(child_1);
-            //childList.add(child_2);
-            // viz.printCoords(childList);
+        for (int i=0; i<offspring.size(); i++) {
+            double[] indCoords = offspring.get(i).getCoords();
+            double[] mutatedIndCoords = Mutator.uniformMuatation(indCoords, this.mutationRate, this.mutationSwing);
+            Individual mutatedInd = new Individual(this.evaluation, mutatedIndCoords);
 
-            // mutate
-            child_1 = applyMutation(child_1);
-            child_2 = applyMutation(child_2);
-
-            childList.add(child_1);
-            childList.add(child_2);
+            offspring.set(i, mutatedInd);
         }
         
-        sortByFitness();
-        ///Add first the surviving parents;
-        this.population = new ArrayList<Individual>(this.population.subList(0, (int)(this.parentsSurvivalRatio*this.populationSize)));
-        
-        ///Add the new children
-        this.population.addAll(childList);
+        return offspring;
+    }
+
+    private ArrayList<Individual> selectSurvivors(ArrayList<Individual> parents, ArrayList<Individual> offspring) throws NotEnoughEvaluationsException {
+        /*
+            New population consists of the best K among parents+offspring,
+            where K = population size.
+
+            Available selection operators in Selector class
+        */
+
+        // sortByFitness(); // there's no need to sort it again. You already sorted it when you selected parents. - Giuseppe
+        this.population = new ArrayList<Individual>(parents);
+        this.population.addAll(offspring);
         
         ///If there are too many ppl cut the worst performing of
-        if (this.population.size()>populationSize){
-        	sortByFitness();
-        	this.population = new ArrayList<Individual>(this.population.subList(0,this.populationSize));
+        if (this.population.size() > this.populationSize){
+        	this.sortByFitness();
+            this.population = Selector.selectFirst(this.population, this.populationSize);
         }
-        ///Otherwise fill the population with random new ppl
-        else if (this.population.size()<populationSize) {
-        	fillEmptyIndividualSlots();
-		}
+        else if (this.population.size() < populationSize) {
+            /// Otherwise fill the population with random new ppl
+            fillEmptyIndividualSlots();
+        }
+
+        return this.population;  
     }
 
-    /// !!! PERFORMANCE HERE DROPS DOWN !!! /// -- still not relevant
     public Individual getBestIndividual() {
-        //if (!this.isSorted)
         try {
 			this.sortByFitness();        
 			previousBest = this.population.get(0);
@@ -244,8 +169,6 @@ public class EA {
 		} catch (NotEnoughEvaluationsException e) {
 			return previousBest;
 		}
-        
-
     }
 
     ///Wrapper function for sorting
@@ -261,5 +184,4 @@ public class EA {
     		throw new NotEnoughEvaluationsException();
         Collections.sort(this.population);
     }
-
 }
