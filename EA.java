@@ -8,19 +8,19 @@ public class EA {
     private ArrayList<Individual> parents;
     private ArrayList<Individual> offspring;
     private double mutationRate;
-    private double mutationSwing;
+    private double mutationStepSize;
     private double parentsRatio; // percentage of individual that becomes a parent
     private double parentsSurvivalRatio; // percentage of parents that survive after replacement
     private Random RNG;
-    private CompetitionCustomPack evaluation; //
+    private     CompetitionCustomPack evaluation; //
     private Individual previousBest;
 
-    public EA(CompetitionCustomPack evaluation,int populationSize, double mutationRate, double mutationSwing, double parentsRatio, double parentsSurvivalRatio) {
+    public EA(CompetitionCustomPack evaluation,int populationSize, double mutationRate, double mutationStepSize, double parentsRatio, double parentsSurvivalRatio) {
         this.evaluation = evaluation;
     	this.populationSize = populationSize;
         this.population = new ArrayList<Individual>(populationSize);
         this.mutationRate = mutationRate;
-        this.mutationSwing = mutationSwing;
+        this.mutationStepSize = mutationStepSize;
         this.parentsRatio = parentsRatio > 1 ? 1 : parentsRatio < 0 ? 0 : parentsRatio;
         this.parentsSurvivalRatio = parentsSurvivalRatio > 1 ? 1 : parentsSurvivalRatio < 0 ? 0 : parentsSurvivalRatio;
         previousBest = null;
@@ -39,12 +39,12 @@ public class EA {
         return this.mutationRate;
     }
 
-    public void setMutationSwing(double value) {
+    public void setMutationStepSize(double value) {
         this.mutationRate = value;
     }
 
-    public double getMutationSwing() {
-        return this.mutationSwing;
+    public double getMutationStepSize() {
+        return this.mutationStepSize;
     }
 
     public ArrayList<Individual> getPopulation() {
@@ -127,7 +127,7 @@ public class EA {
 
         for (int i=0; i<offspring.size(); i++) {
             double[] indCoords = offspring.get(i).getCoords();
-            double[] mutatedIndCoords = Mutator.uniformMuatation(indCoords, this.mutationRate, this.mutationSwing);
+            double[] mutatedIndCoords = Mutator.gaussianMutation(indCoords, this.mutationRate, this.mutationStepSize);
             Individual mutatedInd = new Individual(this.evaluation, mutatedIndCoords);
 
             offspring.set(i, mutatedInd);

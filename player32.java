@@ -25,10 +25,11 @@ public class player32 implements ContestSubmission
 		// Set evaluation problem used in the run
 		//evaluation_ = evaluation;
 		this.evaluation = new CompetitionCustomPack(evaluation);
+		System.out.printf("Num. of available evaluations: %d\n", this.evaluation.getEvaluationLimit());
 		// Get evaluation properties
 		//Properties props = evaluation.getProperties(); ///TODO - depr, no longer needed
         // Get evaluation limit
-        //evaluations_limit_ = Integer.parseInt(props.getProperty("Evaluations"));
+        // evaluations_limit_ = Integer.parseInt(props.getProperty("Evaluations"));
 		// Property keys depend on specific evaluation
 		// E.g. double param = Double.parseDouble(props.getProperty("property_name"));
         
@@ -48,12 +49,12 @@ public class player32 implements ContestSubmission
 	public void run() {
 		
 		int populationSize = 100;
-		double mutationRate = 0.02; // the higher, the more the chance to mutate individuals.
-		double mutationSwing = 0.1;
+		double mutationRate = -0.0; // the higher, the more the chance to mutate individuals.
+		double mutationStepSize = 0.022; // Used in Uniform/Gaussian Mutations to set the width/sigma of the distributions.
 		double parentsRatio = 0.7;
 		double parentsSurvivalRatio = 0.15; // Currently, It is not used.
 
-        EA simplestEA = new EA(evaluation,populationSize, mutationRate, mutationSwing, parentsRatio, parentsSurvivalRatio); 
+        EA simplestEA = new EA(evaluation,populationSize, mutationRate, mutationStepSize, parentsRatio, parentsSurvivalRatio); 
 
 		// calculate fitness
 		try {
@@ -62,7 +63,7 @@ public class player32 implements ContestSubmission
 				simplestEA.evolve();
 				Individual best = simplestEA.getBestIndividual();
 
-				System.out.printf("Best individual in generation: Y = %6.4e\n", best.getFitness());
+				System.out.printf("Best individual after %6d evaluations = %6.4e\n", this.evaluation.getCurrentEvaluationCount(), best.getFitness());
 			}
 		} catch (NotEnoughEvaluationsException e) {
 			//System.out.println(evaluation_.getFinalResult());
