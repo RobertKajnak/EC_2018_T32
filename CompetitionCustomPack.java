@@ -23,6 +23,9 @@ public class CompetitionCustomPack {
 		return maxEvaluationCount-currentEvaluationCount;
 	}
 	
+	public int getEvaluationLimit() {
+		return maxEvaluationCount;
+	}
 	
 	public Object evaluate(double [] X) {
 		if (maxEvaluationCount==currentEvaluationCount) {
