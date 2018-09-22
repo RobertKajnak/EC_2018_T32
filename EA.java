@@ -1,5 +1,6 @@
 import java.util.Random;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Collections;
 
 public class EA {
@@ -55,11 +56,11 @@ public class EA {
     private void fillEmptyIndividualSlots() {
         for (int i=this.population.size(); i<this.populationSize; i++) {
 
-            double[] rndCoords = new double[10];
+            Double[] rndCoords = new Double[10];
             for (int j=0; j<10; j++) 
                 rndCoords[j] = this.RNG.nextDouble()*10 - 5;
 
-            this.population.add(new Individual(evaluation,rndCoords));
+            this.population.add(new Individual(evaluation, rndCoords));
         }
     }
 
@@ -110,7 +111,7 @@ public class EA {
             Individual mom = parents.get(this.RNG.nextInt(numChildren));
             Individual dad = parents.get(this.RNG.nextInt(numChildren));
 
-            Pair<double[], double[]> offspring_coords = Recombinator.onePointCrossover(mom, dad);
+            Pair<Double[], Double[]> offspring_coords = Recombinator.onePointCrossover(mom, dad);
 
             offspring.add(new Individual(this.evaluation, offspring_coords.first()));
             offspring.add(new Individual(this.evaluation, offspring_coords.second()));
@@ -126,8 +127,9 @@ public class EA {
         */
 
         for (int i=0; i<offspring.size(); i++) {
-            double[] indCoords = offspring.get(i).getCoords();
-            double[] mutatedIndCoords = Mutator.gaussianMutation(indCoords, this.mutationRate, this.mutationStepSize);
+            Double[] indCoords = offspring.get(i).getCoords();
+            Map<String, Object> nextState = Mutator.gaussianMutation(indCoords, this.mutationRate, this.mutationStepSize);
+            Double[] mutatedIndCoords = (Double[]) nextState.get("coords");
             Individual mutatedInd = new Individual(this.evaluation, mutatedIndCoords);
 
             offspring.set(i, mutatedInd);

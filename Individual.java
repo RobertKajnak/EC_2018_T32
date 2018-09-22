@@ -1,9 +1,11 @@
 
+import org.apache.commons.lang3.ArrayUtils;
+
 ///I made it immutable for the time being for simplicity. Also, it's a nice thing to have :P
 ///On a more serious note, if the fitness and coord are final, it means that it is not possible 
 ///to accidentally change one, while the other remains unchanged
 class Individual implements Comparable<Individual>{
-    private final double coords[];
+    private final Double coords[];
     private double fitness;
     private boolean isSet=false;
     private CompetitionCustomPack evaluation;
@@ -11,13 +13,13 @@ class Individual implements Comparable<Individual>{
     // Constructor. Initialize individual with provided coords.
     // Random coords are provided by the EA either during initialization
     // or during recombination.
-    public Individual(CompetitionCustomPack evaluation, double[] coords) {
+    public Individual(CompetitionCustomPack evaluation, Double[] coords) {
     	this.evaluation = evaluation;
         this.coords = coords;
         this.isSet = false;
     }
 
-    public double[] getCoords() {
+    public Double[] getCoords() {
         return this.coords;
     }
     
@@ -25,12 +27,12 @@ class Individual implements Comparable<Individual>{
     	return isSet;
     }
 
-    public double getFitness() {
+    public Double getFitness() {
     	if (this.isSet)
     		return this.fitness;
     	else {
-    		isSet = true;
-    		this.fitness = (double)evaluation.evaluate(this.coords);
+            isSet = true;
+    		this.fitness = (double) evaluation.evaluate(ArrayUtils.toPrimitive(this.coords));
     		return this.fitness;
     	}
     }

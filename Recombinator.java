@@ -2,13 +2,13 @@ import java.util.Random;
 import java.util.ArrayList;
 
 public class Recombinator {
-    public static Pair<double[], double[]> onePointCrossover(Individual mom, Individual dad) {
+    public static Pair<Double[], Double[]> onePointCrossover(Individual mom, Individual dad) {
 
-        double[] mom_coords = mom.getCoords();
-        double[] dad_coords = dad.getCoords();
+        Double[] mom_coords = mom.getCoords();
+        Double[] dad_coords = dad.getCoords();
 
-        double child1_coords[] = new double[10];
-        double child2_coords[] = new double[10];
+        Double child1_coords[] = new Double[10];
+        Double child2_coords[] = new Double[10];
 
         //At least 1 gene splice
         Random rnd = new Random();
@@ -25,7 +25,7 @@ public class Recombinator {
             }
         }
 
-        Pair<double[], double[]> offspring_coords = new Pair<double[], double[]>(child1_coords, child2_coords);
+        Pair<Double[], Double[]> offspring_coords = new Pair<Double[], Double[]>(child1_coords, child2_coords);
         return offspring_coords;
     }
 
