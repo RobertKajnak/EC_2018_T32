@@ -8,7 +8,10 @@ The great work of team 32
 
 Just pull the project in src/
 
-# Code workflow
+ # WARNING 
+ There has been a great update since last commit. Everything is change in favour to make implementation and testing of new operators more straightforward. Documentation on how to contribute will be written soon.
+
+### Code workflow (DEPRECATED)
 
 The code is structured in the following way:
 
