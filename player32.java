@@ -2,26 +2,36 @@ import org.vu.contest.ContestSubmission;
 import org.vu.contest.ContestEvaluation;
 
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class player32 implements ContestSubmission
 {
 	Random rnd_;
 	CompetitionCustomPack evaluation;
 	ContestEvaluation evaluation_;
+
+	HashMap<String, Object> EAParams;
+	HashMap<String, Object> recombinationDescriptor;
+	HashMap<String, Object> mutationDescriptor;
+	ArrayList<String> individualDescriptor;
+	EA optimizer;
 	
-	public player32()
-	{
+	public player32() throws NotValidOperatorNameException {
 		rnd_ = new Random();
+		
+		this.EAParams = Config.getEAParams();
+		this.recombinationDescriptor = Config.getRecombinationDescriptor();
+		this.mutationDescriptor = Config.getMutationDescriptor();
+		this.individualDescriptor = Config.getIndividualDescriptor(); 
 	}
 	
-	public void setSeed(long seed)
-	{
+	public void setSeed(long seed) {
 		// Set seed of algortihms random process
 		rnd_.setSeed(seed);
 	}
 
-	public void setEvaluation(ContestEvaluation evaluation)
-	{
+	public void setEvaluation(ContestEvaluation evaluation) {
 		// Set evaluation problem used in the run
 		//evaluation_ = evaluation;
 		this.evaluation = new CompetitionCustomPack(evaluation);
@@ -47,27 +57,16 @@ public class player32 implements ContestSubmission
     }
     
 	public void run() {
-		
-		int populationSize = 100;
-		double mutationRate = -0.0; // the higher, the more the chance to mutate individuals.
-		double mutationStepSize = 0.022; // Used in Uniform/Gaussian Mutations to set the width/sigma of the distributions.
-		double parentsRatio = 0.7;
-		double parentsSurvivalRatio = 0.15; // Currently, It is not used.
 
-        EA simplestEA = new EA(evaluation,populationSize, mutationRate, mutationStepSize, parentsRatio, parentsSurvivalRatio); 
+		this.optimizer = new EA(this.evaluation, this.EAParams, this.recombinationDescriptor, this.mutationDescriptor, this.individualDescriptor);
 
-		// calculate fitness
 		try {
         	while(true) {
-
-				simplestEA.evolve();
-				Individual best = simplestEA.getBestIndividual();
-
-				System.out.printf("Best individual after %6d evaluations = %6.4e\n", this.evaluation.getCurrentEvaluationCount(), best.getFitness());
+				this.optimizer.evolve();
+				System.out.printf("Best individual after %6d evaluations = %6.4e\n", this.evaluation.getCurrentEvaluationCount(), this.optimizer.getBestIndividual().getFitness());
 			}
 		} catch (NotEnoughEvaluationsException e) {
-			//System.out.println(evaluation_.getFinalResult());
+			// System.out.println(evaluation_.getFinalResult());
 		}
-	}
+	}	
 }
-	

@@ -1,51 +1,53 @@
 import java.util.Random;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.HashMap;
 import java.util.Collections;
 
 public class EA {
-    private int populationSize;
+    private CompetitionCustomPack evaluation;
+
+    private HashMap<String, Object> EAParams;
+    private HashMap<String, Object> recombinationDescriptor;
+    private HashMap<String, Object> mutationDescriptor;
+    private ArrayList<String> individualDescriptor;
+
+    private Integer populationSize;      // number of individuals
+    private Double mutationRate;         // percentage of mutants
+    private Double parentsRatio;         // percentage of individual that becomes a parent
+    private Double parentsSurvivalRatio; // percentage of parents that survive after replacement
+
     private ArrayList<Individual> population;
     private ArrayList<Individual> parents;
     private ArrayList<Individual> offspring;
-    private double mutationRate;
-    private double mutationStepSize;
-    private double parentsRatio; // percentage of individual that becomes a parent
-    private double parentsSurvivalRatio; // percentage of parents that survive after replacement
+    
     private Random RNG;
-    private     CompetitionCustomPack evaluation; //
     private Individual previousBest;
 
-    public EA(CompetitionCustomPack evaluation,int populationSize, double mutationRate, double mutationStepSize, double parentsRatio, double parentsSurvivalRatio) {
+    public EA(CompetitionCustomPack evaluation, HashMap<String, Object> EAParams, HashMap<String, Object> recombinationDescriptor, HashMap<String, Object> mutationDescriptor, ArrayList<String> individualDescriptor) {
         this.evaluation = evaluation;
-    	this.populationSize = populationSize;
-        this.population = new ArrayList<Individual>(populationSize);
-        this.mutationRate = mutationRate;
-        this.mutationStepSize = mutationStepSize;
-        this.parentsRatio = parentsRatio > 1 ? 1 : parentsRatio < 0 ? 0 : parentsRatio;
-        this.parentsSurvivalRatio = parentsSurvivalRatio > 1 ? 1 : parentsSurvivalRatio < 0 ? 0 : parentsSurvivalRatio;
-        previousBest = null;
+
+        // Global EA parameters
+        this.EAParams = EAParams;
+    	this.populationSize = (Integer) EAParams.get("populationSize");
+        this.mutationRate = (Double) EAParams.get("mutationRate");
+        this.parentsRatio = (Double) EAParams.get("parentsRatio");
+        this.parentsSurvivalRatio = (Double) EAParams.get("parentsSurvivalRatio");
+
+        this.recombinationDescriptor = recombinationDescriptor;
+        this.mutationDescriptor = mutationDescriptor;
+        this.individualDescriptor = individualDescriptor; 
         
+        // checks
+        this.parentsRatio = this.parentsRatio > 1 ? 1 : this.parentsRatio < 0 ? 0 : this.parentsRatio;
+        this.parentsSurvivalRatio = this.parentsSurvivalRatio > 1 ? 1 : this.parentsSurvivalRatio < 0 ? 0 : this.parentsSurvivalRatio;
+
+        // helpers
+        this.previousBest = null;
         this.RNG = new Random();
-        //this.isSorted = false;
 
-        this.fillEmptyIndividualSlots();
-    }
-
-    public void setMutationRate(double value) {
-        this.mutationRate = value;
-    }
-
-    public double getMutationRate() {
-        return this.mutationRate;
-    }
-
-    public void setMutationStepSize(double value) {
-        this.mutationRate = value;
-    }
-
-    public double getMutationStepSize() {
-        return this.mutationStepSize;
+        // initialize population
+        this.population = new ArrayList<Individual>(this.populationSize);
+        this.fillEmptyIndividualSlots(individualDescriptor);
     }
 
     public ArrayList<Individual> getPopulation() {
@@ -53,14 +55,38 @@ public class EA {
     }
 
     // fills in empty slots in the population with individuals
-    private void fillEmptyIndividualSlots() {
+    private void fillEmptyIndividualSlots(ArrayList<String> individualDescriptor) {
         for (int i=this.population.size(); i<this.populationSize; i++) {
 
-            Double[] rndCoords = new Double[10];
-            for (int j=0; j<10; j++) 
-                rndCoords[j] = this.RNG.nextDouble()*10 - 5;
+            HashMap<String, Object> genotype = new HashMap<String, Object>();
 
-            this.population.add(new Individual(evaluation, rndCoords));
+            // did not found a more scalable way - Giuseppe
+            if (individualDescriptor.contains("coords")) {
+                Double[] coords = new Double[10];
+                for (int j=0; j<10; j++) 
+                    coords[j] = this.RNG.nextDouble()*10 - 5;
+                genotype.put("coords", coords);
+            }
+
+            if (individualDescriptor.contains("stepSize"))
+                genotype.put("stepSize", new Double(0.));
+
+            if (individualDescriptor.contains("stepSizes")) {
+                Double[] stepSizes = new Double[10];
+                for (int j=0; j<10; j++) 
+                    stepSizes[j] = new Double(0.);
+                genotype.put("stepSizes", stepSizes);
+            }
+
+            if (individualDescriptor.contains("alphas")) {
+                Double[][] alphas = new Double[10][10];
+                for (int j=0; j<10; j++) 
+                    for (int k=0; k<10; k++)
+                        alphas[j][k] = new Double(0.);
+                genotype.put("alphas", alphas);
+            }
+            
+            this.population.add(new Individual(this.evaluation, genotype));
         }
     }
 
@@ -72,12 +98,6 @@ public class EA {
     }
 
     private ArrayList<Individual> selectParents() throws NotEnoughEvaluationsException {
-        /*
-            Parents = the first K best individuals.
-
-            Available selection operators in Selector class
-        */
-
         this.sortByFitness();
         int numParents = (int) (this.populationSize * this.parentsRatio);
         ArrayList<Individual> parents = new ArrayList<Individual>(this.population.subList(0, numParents));
@@ -85,67 +105,50 @@ public class EA {
         return parents; 
     }
 
+    /*
+    *  Operators implemented:
+    *      - One point crossover
+    */
     private ArrayList<Individual> recombine(ArrayList<Individual> parents) {
-        /*
-            ### OLD VERSION ###
-            Since parents are sorted by fitness, 
-            coupling them sequencially means to couple
-            the best one with the second-best and the 
-            third-best with the fourth and so on. 
-            Therefore, I shuffle the parents' array to 
-            break this simmetry.
-
-            Collections.shuffle(parents);
-
-            ### NEW VERSION ###
-            parents are picked randomly for each child.
-            The number of child is equal to the number of parents.
-
-            Available crossover operators in Recombinator class
-        */
-
         offspring = new ArrayList<Individual>();
         
         int numChildren = (int) (this.populationSize * this.parentsRatio);
         for (int i=0; i<numChildren; i++) {
             Individual mom = parents.get(this.RNG.nextInt(numChildren));
             Individual dad = parents.get(this.RNG.nextInt(numChildren));
+            
+            Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = ((RecombinationFunctionInterface)this.recombinationDescriptor.get("call")).execute(mom, dad);
+            // Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = Recombinator.onePointCrossover(mom, dad);
 
-            Pair<Double[], Double[]> offspring_coords = Recombinator.onePointCrossover(mom, dad);
-
-            offspring.add(new Individual(this.evaluation, offspring_coords.first()));
-            offspring.add(new Individual(this.evaluation, offspring_coords.second()));
+            offspring.add(new Individual(this.evaluation, offspringGenotype.first()));
+            offspring.add(new Individual(this.evaluation, offspringGenotype.second()));
         }
 
         return offspring;
     }
 
+    /*
+    *  Operators implemented:
+    *      - Uniform Mutation
+    *      - Gaussina Mutation
+    *      - Uncorrelated 1 step size Mutation
+    *      - Uncorrelated N step sizes Mutation
+    *      - Correlated N step sizes Mutation - Not working due to a bug (SecurityException: Attempting to create a class loader!)
+    */
     private ArrayList<Individual> mutate(ArrayList<Individual> offspring) {
-
-        /*
-            Available mutation oparators in Mutator class
-        */
-
         for (int i=0; i<offspring.size(); i++) {
-            Double[] indCoords = offspring.get(i).getCoords();
-            Map<String, Object> nextState = Mutator.gaussianMutation(indCoords, this.mutationRate, this.mutationStepSize);
-            Double[] mutatedIndCoords = (Double[]) nextState.get("coords");
-            Individual mutatedInd = new Individual(this.evaluation, mutatedIndCoords);
-
-            offspring.set(i, mutatedInd);
+            HashMap<String, Object> genotype = offspring.get(i).getGenotype();
+            HashMap<String, Object> params = (HashMap<String, Object>) this.mutationDescriptor.get("params");
+            HashMap<String, Object> mutatedGenotype = ((MutationFunctionInterface)this.mutationDescriptor.get("call")).execute(genotype, params);
+            // HashMap<String, Object> mutatedGenotype = Mutator.gaussian(genotype);
+            Individual mutant = new Individual(this.evaluation, mutatedGenotype);
+            offspring.set(i, mutant);
         }
         
         return offspring;
     }
 
     private ArrayList<Individual> selectSurvivors(ArrayList<Individual> parents, ArrayList<Individual> offspring) throws NotEnoughEvaluationsException {
-        /*
-            New population consists of the best K among parents+offspring,
-            where K = population size.
-
-            Available selection operators in Selector class
-        */
-
         // sortByFitness(); // there's no need to sort it again. You already sorted it when you selected parents. - Giuseppe
         this.population = new ArrayList<Individual>(parents);
         this.population.addAll(offspring);
@@ -157,7 +160,7 @@ public class EA {
         }
         else if (this.population.size() < populationSize) {
             /// Otherwise fill the population with random new ppl
-            fillEmptyIndividualSlots();
+            fillEmptyIndividualSlots(this.individualDescriptor);
         }
 
         return this.population;  

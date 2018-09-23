@@ -3,99 +3,120 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Random;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
+import java.lang.Math;
 
 public class Mutator {
-    public static Map<String, Object> uniformMutation(Double[] coords, double mutationRate, Double mutationStepSize){
+    public static HashMap<String, Object> uniform(HashMap<String, Object> genotype, HashMap<String, Object> params){
         Random rnd = new Random();
+
+        Double mutationRate = (Double) params.get("mutationRate");
+        Double width = (Double) params.get("width");
         
+        Double[] coords = (Double[]) genotype.get("coords"); 
         for (int i=0; i<10; i++) {
             if (rnd.nextDouble() > mutationRate) { // not sure this condition should be checked - Giuseppe
-                coords[i] = coords[i] + mutationStepSize * (rnd.nextDouble() - 0.5);
+                coords[i] = coords[i] + width * (rnd.nextDouble() - 0.5);
                 coords[i] = Math.min(5, Math.max(-5, coords[i]));
             }
         }
 
-        Map<String, Object> newState = new HashMap<String, Object>();
-        newState.put("coords", coords); 
-
-        return newState;
+        genotype.put("coords", coords);
+        return genotype;
     }
 
-    public static Map<String, Object> gaussianMutation(Double[] coords, double mutationRate, Double mutationStepSize) {
+    public static HashMap<String, Object> gaussian(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         Random rnd = new Random();
         
-        for (int i=0; i<10; i++) {Double[] coordsObj = new Double[10];
+        Double mutationRate = (Double) params.get("mutationRate");
+        Double sigma = (Double) params.get("sigma");
+        
+        Double[] coords = (Double[]) genotype.get("coords");
+        for (int i=0; i<10; i++) {
             if (rnd.nextDouble() > mutationRate) { // not sure this condition should be checked - Giuseppe
-                coords[i] = coords[i] + mutationStepSize * rnd.nextGaussian();
+                coords[i] = coords[i] + sigma * rnd.nextGaussian();
                 coords[i] = Math.min(5, Math.max(-5, coords[i]));
             }
         }
 
-        Map<String, Object> newState = new HashMap<String, Object>();
-        newState.put("coords", coords); 
-
-        return newState;
+        genotype.put("coords", coords);
+        return genotype;
     }
 
-    // In the following functions, I did not find any other method 
-    // to return two values. Any other solution which requires less 
-    // abstraction, less number of lines of code and still keep 
-    // readability is definetly welcome - Giuseppe
-    public static Map<String, Object> uncorrelatedMutation_1_stepSize(Double[] coords, double mutationRate, Double mutationStepSize, double tau) {
+    public static HashMap<String, Object> uncorrelated_1_stepSize(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         Random rnd = new Random();
+
+        Double mutationRate = (Double) params.get("mutationRate");
         
         // same for all the coordinates
-        mutationStepSize = mutationStepSize * Math.exp(tau * rnd.nextGaussian());
-        mutationStepSize = Math.max(mutationStepSize, 0.05); // <-- it sets the minimum standard deviation
-
+        Double tau = 1.0 / Math.sqrt(10);
+        Double stepSize = (Double) genotype.get("stepSize");
+        stepSize = stepSize * Math.exp(tau * rnd.nextGaussian());
+        stepSize = Math.max(stepSize, 0.05); // <-- it sets the minimum standard deviation
+        
+        Double[] coords = (Double[]) genotype.get("coords");
         for (int i=0; i<10; i++) {
             if (rnd.nextDouble() > mutationRate) { // not sure this condition should be checked - Giuseppe
-                coords[i] = coords[i] + rnd.nextGaussian() * mutationStepSize;
+                coords[i] = coords[i] + stepSize * rnd.nextGaussian();
                 coords[i] = Math.min(5, Math.max(-5, coords[i]));
             }
         }
 
-        Map<String, Object> newState = new HashMap<String, Object>();
-        newState.put("coords", coords); 
-        newState.put("mutation stepsize", mutationStepSize);
-
-        return newState;
+        genotype.put("coords", coords);
+        genotype.put("stepSize", stepSize);
+        return genotype;
     } 
 
-    public static Map<String, Object> uncorrelatedMutation_N_stepSize(Double[] coords, double mutationRate, Double[] mutationStepSizes, double tau, double tauPrime) {
+    public static HashMap<String, Object> uncorrelated_N_stepSizes(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         Random rnd = new Random();
 
+        Double mutationRate = (Double) params.get("mutationRate");
+
+        Double tau = 1.0 / Math.sqrt(2 * Math.sqrt(10));
+        Double tauPrime = 1.0 / Math.sqrt(2 * 10);
+        Double commonDistribution = tauPrime * rnd.nextGaussian();
+
+        Double[] stepSizes = (Double[]) genotype.get("stepSizes");
+        Double[] coords = (Double[]) genotype.get("coords");
         for (int i=0; i<10; i++) {
             if (rnd.nextDouble() > mutationRate) { // not sure this condition should be checked - Giuseppe
-                mutationStepSizes[i] = mutationStepSizes[i] * Math.exp(tau * rnd.nextGaussian()) * Math.exp(tauPrime * rnd.nextGaussian());
-                mutationStepSizes[i] = Math.max(mutationStepSizes[i], 0.05); // <-- it sets the minimum standard deviation
-                coords[i] = coords[i] + rnd.nextGaussian() * mutationStepSizes[i];
+                stepSizes[i] = stepSizes[i] * Math.exp(commonDistribution + tau * rnd.nextGaussian());
+                stepSizes[i] = Math.max(stepSizes[i], 0.05); // <-- it sets the minimum standard deviation
+                coords[i] = coords[i] + stepSizes[i] * rnd.nextGaussian();
                 coords[i] = Math.min(5, Math.max(-5, coords[i]));
             }
         }
 
-        Map<String, Object> newState = new HashMap<String, Object>();
-        newState.put("coords", coords); 
-        newState.put("mutation stepsizes", mutationStepSizes);
-
-        return newState;
+        genotype.put("coords", coords);
+        genotype.put("stepSizes", stepSizes);
+        return genotype;
     } 
 
-    public static Map<String, Object> correlatedMutation(Double[] coords, Double[] mutationStepSizes, Double[][] alphas, double tau, double tauPrime) {
+    public static HashMap<String, Object> correlated_N_stepSizes(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         /*
-            Note: I deleted the mutationRate parameter since here all the coordinates are correlated
+            Note: I don't use the mutationRate parameter since here all the coordinates are correlated
                   and it does not make sense to me to update only few of them. - Giuseppe
         */
 
         Random rnd = new Random();
+        
+        Double beta = 0.087; // 5° = 0.087 randians
+        Double tau = 1.0 / Math.sqrt(2 * Math.sqrt(10));
+        Double tauPrime = 1.0 / Math.sqrt(2 * 10);
+        Double commonDistribution = tauPrime * rnd.nextGaussian();
+
+        Double[] coords = (Double[]) genotype.get("coords");
+        Double[] stepSizes = (Double[]) genotype.get("stepSizes");
+        Double[][] alphas = (Double[][]) genotype.get("alphas");
 
         for (int i=0; i<10; i++) {
-            mutationStepSizes[i] = mutationStepSizes[i] * Math.exp(tau * rnd.nextGaussian()) * Math.exp(tauPrime * rnd.nextGaussian());
-            mutationStepSizes[i] = Math.max(mutationStepSizes[i], 0.05); // <-- it sets the minimum standard deviation
+            stepSizes[i] = stepSizes[i] * Math.exp(commonDistribution + tau * rnd.nextGaussian());
+            stepSizes[i] = Math.max(stepSizes[i], 0.05); // <-- it sets the minimum standard deviation
             for (int j=0; j<10; j++) {
-                alphas[i][j] = alphas[i][j] + 0.087 * rnd.nextGaussian(); // here 0.087 = Beta = 5° (in radians)
+                alphas[i][j] = alphas[i][j] + beta * rnd.nextGaussian();
+                if (Math.abs(alphas[i][j]) > Math.PI) {
+                    alphas[i][j] = alphas[i][j] - 2 * Math.PI * Math.signum(alphas[i][j]);
+                }
             }
         }
 
@@ -105,7 +126,7 @@ public class Mutator {
             for (int q=0; q<10; q++) {
                 if (p == q) cov[p][q] = 0.;
                 else {
-                    cov[p][q] = 0.5 * (Math.pow(mutationStepSizes[p], 2) - Math.pow(mutationStepSizes[q], 2)) * Math.tan(2 * alphas[p][q]);
+                    cov[p][q] = 0.5 * (Math.pow(stepSizes[p], 2) - Math.pow(stepSizes[q], 2)) * Math.tan(2 * alphas[p][q]);
                 }
             }
         }
@@ -116,11 +137,9 @@ public class Mutator {
         for (int i=0; i<10; i++) 
             coords[i] = coords[i] + deltaCoords[i];
 
-        Map<String, Object> newState = new HashMap<String, Object>();
-        newState.put("coords", coords); 
-        newState.put("mutation stepsizes", mutationStepSizes);
-        newState.put("mutation alphas", alphas);
-
-        return newState;
+        genotype.put("coords", coords);
+        genotype.put("stepSizes", stepSizes);
+        genotype.put("alphas", alphas);
+        return genotype;
     }
 }
