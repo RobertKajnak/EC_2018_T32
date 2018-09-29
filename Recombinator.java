@@ -1,6 +1,7 @@
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.lang.Math;
 
 public class Recombinator {
     public static Pair< HashMap<String, Object>, HashMap<String, Object> > onePointCrossover(Individual mom, Individual dad, HashMap<String, Object> params) {
@@ -297,4 +298,81 @@ public class Recombinator {
         return offspringGenotypes;
     }
 
+    public static Pair< HashMap<String, Object>, HashMap<String, Object> > blendCrossover(Individual mom, Individual dad, HashMap<String, Object> params) {
+
+        HashMap<String, Object> momGenotype = mom.getGenotype();
+        HashMap<String, Object> dadGenotype = dad.getGenotype();
+        HashMap<String, Object> childGenotype_1 = new HashMap<String, Object>();
+        HashMap<String, Object> childGenotype_2 = new HashMap<String, Object>();
+
+        Random rnd = new Random();
+        
+        Double alpha = (Double) params.get("blendCrossAlpha");
+        
+        for (String key : momGenotype.keySet()) {
+            if (momGenotype.get(key) instanceof Double) {
+                Double momParameters = (Double) momGenotype.get(key);
+                Double dadParameters = (Double) dadGenotype.get(key);
+
+                Double max = Math.max(momParameters, dadParameters);
+                Double min = Math.min(momParameters, dadParameters);
+                Double gamma_1 = (1 - 2*alpha) * rnd.nextDouble() - alpha;
+                Double gamma_2 = (1 - 2*alpha) * rnd.nextDouble() - alpha;
+
+                childGenotype_1.put(key, (1-gamma_1) * momParameters + gamma_1*dadParameters);
+                childGenotype_2.put(key, (1-gamma_2) * momParameters + gamma_2*dadParameters);
+            }
+            else if (momGenotype.get(key) instanceof Double[]) {
+                Double[] momParameters = (Double[]) momGenotype.get(key);
+                Double[] dadParameters = (Double[]) dadGenotype.get(key);
+
+                int numParameters = momParameters.length;
+
+                Double[] childParameters_1 = new Double[numParameters];
+                Double[] childParameters_2 = new Double[numParameters];
+
+                for (int i=0; i<numParameters; i++) {
+                    Double max = Math.max(momParameters[i], dadParameters[i]);
+                    Double min = Math.min(momParameters[i], dadParameters[i]);
+                    Double gamma_1 = (1 - 2*alpha) * rnd.nextDouble() - alpha;
+                    Double gamma_2 = (1 - 2*alpha) * rnd.nextDouble() - alpha;
+
+                    childParameters_1[i] = (1-gamma_1) * momParameters[i] + gamma_1*dadParameters[i];
+                    childParameters_2[i] = (1-gamma_2) * momParameters[i] + gamma_2*dadParameters[i];
+                }
+
+                childGenotype_1.put(key, childParameters_1);
+                childGenotype_2.put(key, childParameters_2);
+            }
+            else if (momGenotype.get(key) instanceof Double[][]) {
+                // split the matrix row-wise.
+                Double[][] momParameters = (Double[][]) momGenotype.get(key);
+                Double[][] dadParameters = (Double[][]) dadGenotype.get(key);
+    
+                int numRows = momParameters.length;
+    
+                Double[][] childParameters_1 = new Double[numRows][numRows];
+                Double[][] childParameters_2 = new Double[numRows][numRows];
+    
+                for (int i=0; i<numRows; i++) {
+                    for (int j=0; j<numRows; j++) {
+                        Double max = Math.max(momParameters[i][j], dadParameters[i][j]);
+                        Double min = Math.min(momParameters[i][j], dadParameters[i][j]);
+                        Double gamma_1 = (1 - 2*alpha) * rnd.nextDouble() - alpha;
+                        Double gamma_2 = (1 - 2*alpha) * rnd.nextDouble() - alpha;
+
+                        childParameters_1[i][j] = (1-gamma_1) * momParameters[i][j] + gamma_1*dadParameters[i][j];
+                        childParameters_2[i][j] = (1-gamma_2) * momParameters[i][j] + gamma_2*dadParameters[i][j];
+                    }
+                }
+    
+                childGenotype_1.put(key, childParameters_1);
+                childGenotype_2.put(key, childParameters_2);
+            }
+        }
+
+        Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotypes = new Pair< HashMap<String, Object>, HashMap<String, Object> >(childGenotype_1, childGenotype_2);
+
+        return offspringGenotypes;
+    }
 }
