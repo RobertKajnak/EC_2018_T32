@@ -63,7 +63,7 @@ New operators should be added to the files Recombinator.java and Mutator.java:
 
  - **Recombination operator**: each operator is a function with the following function declaration:
 
-		public static Pair< HashMap<String, Object>, HashMap<String, Object> > onePointCrossover(Individual mom, Individual dad) {
+		public static Pair< HashMap<String, Object>, HashMap<String, Object> > opearatorName(Individual mom, Individual dad) {
 
 			// some cool stuff
 
