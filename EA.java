@@ -117,7 +117,9 @@ public class EA {
             Individual mom = parents.get(this.RNG.nextInt(numChildren));
             Individual dad = parents.get(this.RNG.nextInt(numChildren));
             
-            Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = ((RecombinationFunctionInterface)this.recombinationDescriptor.get("call")).execute(mom, dad);
+            @SuppressWarnings("unchecked")
+            HashMap<String, Object> params = (HashMap<String, Object>) this.recombinationDescriptor.get("params");
+            Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = ((RecombinationFunctionInterface)this.recombinationDescriptor.get("call")).execute(mom, dad, params);
             // Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = Recombinator.onePointCrossover(mom, dad);
 
             offspring.add(new Individual(this.evaluation, offspringGenotype.first()));
@@ -138,6 +140,8 @@ public class EA {
     private ArrayList<Individual> mutate(ArrayList<Individual> offspring) {
         for (int i=0; i<offspring.size(); i++) {
             HashMap<String, Object> genotype = offspring.get(i).getGenotype();
+
+            @SuppressWarnings("unchecked")
             HashMap<String, Object> params = (HashMap<String, Object>) this.mutationDescriptor.get("params");
             HashMap<String, Object> mutatedGenotype = ((MutationFunctionInterface)this.mutationDescriptor.get("call")).execute(genotype, params);
             // HashMap<String, Object> mutatedGenotype = Mutator.gaussian(genotype);
