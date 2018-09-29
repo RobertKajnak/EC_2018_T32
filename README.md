@@ -104,11 +104,11 @@ Once you've created your new operator, do:
  - [x] One-point Crossover
  - [ ] n-points Crossover
  - [ ] Diagonal Crossover
- - [ ] Uniform Crossover
- - [ ] Blend Crossover
- - [ ] Simple Arithmetic Recombination
- - [ ] Single Arithmetic Recombination 
- - [ ] Whole Arithmetic Recombination
+ - [x] Uniform Crossover
+ - [x] Blend Crossover
+ - [x] Simple Arithmetic Recombination
+ - [x] Single Arithmetic Recombination 
+ - [x] Whole Arithmetic Recombination
 
 ### Supported mutation operators
 
