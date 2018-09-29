@@ -10,10 +10,10 @@ public class Config {
     private static final Double parentsSurvivalRatio = 0.7;
 
     /// RECOMBINATION OPERATOR ///
-    private static final String recombinationOperatorName = "wholeArithmeticCrossover";
+    private static final String recombinationOperatorName = "blendCrossover";
 
     /// MUTATION OPERATOR ///
-    private static final String mutationOperatorName = "uniform";
+    private static final String mutationOperatorName = "uncorrelated_N_stepSizes";
 
 
     /// MANUALLY TUNED PARAMETERS FOR OPERATOR
@@ -29,6 +29,9 @@ public class Config {
 
     // -<--- Whole Arithmetic Crossover --->-
     private static final Double wholeCrossAlpha = 0.5;
+
+    // -<--- Blend Arithmetic Crossover --->-
+    private static final Double blendCrossAlpha = 0.5;
 
     // -<--- Uniform Mutation --->-
     private static final Double width = 0.15; 
@@ -89,6 +92,13 @@ public class Config {
                 recombinationDescriptor.put("call", new RecombinationFunctionInterface() {
                     public Pair< HashMap<String, Object>, HashMap<String, Object> > execute(Individual mom, Individual dad, HashMap<String, Object> params)
                         {return Recombinator.wholeArithmeticCrossover(mom, dad, params);}
+                });
+                break;
+            case "blendCrossover":
+                params.put("blendCrossAlpha", blendCrossAlpha);
+                recombinationDescriptor.put("call", new RecombinationFunctionInterface() {
+                    public Pair< HashMap<String, Object>, HashMap<String, Object> > execute(Individual mom, Individual dad, HashMap<String, Object> params)
+                        {return Recombinator.blendCrossover(mom, dad, params);}
                 });
                 break;
             default:
@@ -165,6 +175,8 @@ public class Config {
             case "singleArithmeticCrossover":
                 break;
             case "wholeArithmeticCrossover":
+                break;
+            case "blendCrossover":
                 break;
 			default:
 				throw new NotValidOperatorNameException("You did not provide a valid name for the recombination operator.");
