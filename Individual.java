@@ -7,6 +7,7 @@ import java.util.HashMap;
 ///I made it immutable for the time being for simplicity. Also, it's a nice thing to have :P
 ///On a more serious note, if the fitness and coord are final, it means that it is not possible 
 ///to accidentally change one, while the other remains unchanged
+@SuppressWarnings("overrides")
 class Individual implements Comparable<Individual>{
     private final HashMap<String, Object> genotype; 
     private double fitness;
