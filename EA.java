@@ -136,6 +136,9 @@ public class EA {
 
             @SuppressWarnings("unchecked")
             HashMap<String, Object> params = (HashMap<String, Object>) this.mutationDescriptor.get("params");
+            if ( (Boolean) params.get("variable")) {
+                params.put("evaluation", this.evaluation);
+            }
             HashMap<String, Object> mutatedGenotype = ((MutationFunctionInterface)this.mutationDescriptor.get("call")).execute(genotype, params);
             // HashMap<String, Object> mutatedGenotype = Mutator.gaussian(genotype);
             Individual mutant = new Individual(this.evaluation, mutatedGenotype);
