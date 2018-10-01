@@ -75,7 +75,7 @@ public class player32 implements ContestSubmission
 		try {
         	while(true) {
 				this.optimizer.evolve();
-				System.out.printf("Best individual after %6d evaluations = %6.4e\n", this.evaluation.getCurrentEvaluationCount(), this.optimizer.getBestIndividual().getFitness());
+				System.out.printf("Best individual after %6d evaluations = %6.8e\n", this.evaluation.getCurrentEvaluationCount(), this.optimizer.getBestIndividual().getFitness());
 			}
 		} catch (NotEnoughEvaluationsException e) {
 			// System.out.println(evaluation_.getFinalResult());

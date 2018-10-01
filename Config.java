@@ -5,14 +5,14 @@ public class Config {
 
     /// EA GLOBAL PARAMETERS ///
     private static final Integer populationSize = 100;
-    private static final Integer offspringSize = 30;
-    private static final Double mutationRate = 0.25; // percentage of offspring being mutated
+    private static final Integer offspringSize = 10;
+    private static final Double mutationRate = 0.5; // percentage of offspring being mutated
 
     /// PARENTS SELECTION OPERATOR ///
-    private static final String parentsSelectionOperatorName = "best_N_selector";
+    private static final String parentsSelectionOperatorName = "best_K_selector";
 
     /// RECOMBINATION OPERATOR ///
-    private static final String recombinationOperatorName = "onePointCrossover";
+    private static final String recombinationOperatorName = "blendCrossover";
 
     /// MUTATION OPERATOR ///
     private static final String mutationOperatorName = "gaussian";
@@ -23,8 +23,11 @@ public class Config {
 
     // #### PARENTS SELECTION PARAMETERS ####
 
-    // -<--- mu + lambda --->-
-    private static final Double parentsRatio = 0.015;
+    // -<--- best_K_selector --->-
+    private static final Double bestK_parentsRatio = 0.15;
+
+    // -<--- Fitness Proportional Selector --->-
+    private static final Double FPS_parentsRatio = 0.15;
 
 
 
@@ -53,7 +56,7 @@ public class Config {
     private static final Double width = 0.07; 
 
     // -<--- Gaussian Mutation --->-
-    private static final Double sigma = 0.25;
+    private static final Double sigma = 0.3;
     private static final Boolean variable = true;
 
     // -<--- Uncorrelated 1 stepSize Mutation --->-
@@ -95,11 +98,18 @@ public class Config {
         parentsSelectionDescriptor.put("operatorName", parentsSelectionOperatorName);
 
         switch (parentsSelectionOperatorName) {
-            case "best_N_selector":
-                params.put("parentsRatio", parentsRatio);
+            case "best_K_selector":
+                params.put("parentsRatio", bestK_parentsRatio);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) {
-                        return ParentsSelector.best_N_selector(population, params);}
+                        return ParentsSelector.best_K_selector(population, params);}
+                });
+                break;
+            case "fitness_proportional_selector":
+                params.put("parentsRatio", FPS_parentsRatio);
+                parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
+                    public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
+                        return ParentsSelector.fitness_proportional_selector(population, params);}
                 });
                 break;
             default:
