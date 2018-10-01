@@ -30,6 +30,13 @@ public class Mutator {
         
         Double mutationRate = (Double) params.get("mutationRate");
         Double sigma = (Double) params.get("sigma");
+
+        if ( (Boolean) params.get("variable")) {
+            CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
+            sigma = sigma * Math.exp(-Math.pow(( (double) evaluation.getEvaluationLimit() - evaluation.evaluationsRemaining())/evaluation.getEvaluationLimit()*2, 0.5));
+            // System.out.println(((double) evaluation.getEvaluationLimit() - evaluation.evaluationsRemaining())/evaluation.getEvaluationLimit()*5);
+            // System.out.println(sigma);
+        }
         
         Double[] coords = (Double[]) genotype.get("coords");
         for (int i=0; i<10; i++) {
