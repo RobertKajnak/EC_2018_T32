@@ -106,6 +106,7 @@ public class EA {
     private ArrayList<Individual> selectParents() throws NotEnoughEvaluationsException {
         
         HashMap<String, Object> params = (HashMap<String, Object>) this.parentsSelectionDescriptor.get("params");
+        params.put("evaluation", this.evaluation);
         ArrayList<Individual> parents = ((ParentsSelectionFunctionInterface) this.parentsSelectionDescriptor.get("call")).execute(this.population, params);
 
         return parents; 
@@ -120,6 +121,7 @@ public class EA {
             
             @SuppressWarnings("unchecked")
             HashMap<String, Object> params = (HashMap<String, Object>) this.recombinationDescriptor.get("params");
+            params.put("evaluation", this.evaluation);
             Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = ((RecombinationFunctionInterface)this.recombinationDescriptor.get("call")).execute(mom, dad, params);
             // Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = Recombinator.onePointCrossover(mom, dad);
 
@@ -136,9 +138,7 @@ public class EA {
 
             @SuppressWarnings("unchecked")
             HashMap<String, Object> params = (HashMap<String, Object>) this.mutationDescriptor.get("params");
-            if ( params.containsKey("variable") && (Boolean) params.get("variable")) {
-                params.put("evaluation", this.evaluation);
-            }
+            params.put("evaluation", this.evaluation);
             HashMap<String, Object> mutatedGenotype = ((MutationFunctionInterface)this.mutationDescriptor.get("call")).execute(genotype, params);
             // HashMap<String, Object> mutatedGenotype = Mutator.gaussian(genotype);
             Individual mutant = new Individual(this.evaluation, mutatedGenotype);
