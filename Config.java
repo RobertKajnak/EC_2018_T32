@@ -6,7 +6,7 @@ public class Config {
     /// EA GLOBAL PARAMETERS ///
     private static final Integer populationSize = 100;
     private static final Integer offspringSize = 30;
-    private static final Double mutationRate = 0.;
+    private static final Double mutationRate = 0.25; // percentage of offspring being mutated
 
     /// PARENTS SELECTION OPERATOR ///
     private static final String parentsSelectionOperatorName = "best_N_selector";
@@ -24,7 +24,7 @@ public class Config {
     // #### PARENTS SELECTION PARAMETERS ####
 
     // -<--- mu + lambda --->-
-    private static final Double parentsRatio = 0.02;
+    private static final Double parentsRatio = 0.015;
 
 
 
@@ -53,7 +53,7 @@ public class Config {
     private static final Double width = 0.07; 
 
     // -<--- Gaussian Mutation --->-
-    private static final Double sigma = 0.01;
+    private static final Double sigma = 0.09;
 
     // -<--- Uncorrelated 1 stepSize Mutation --->-
     // none
@@ -185,14 +185,12 @@ public class Config {
                 });
                 break;
             case "uncorrelated_1_stepSize":
-                params.put("mutationRate", mutationRate);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uncorrelated_1_stepSize(genotype, params);}
                 });
                 break;
             case "uncorrelated_N_stepSizes":
-                params.put("mutationRate", mutationRate);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uncorrelated_N_stepSizes(genotype, params);}
