@@ -12,8 +12,10 @@ public class player32 implements ContestSubmission
 	ContestEvaluation evaluation_;
 
 	HashMap<String, Object> EAParams;
+	HashMap<String, Object> parentsSelectionDescriptor;
 	HashMap<String, Object> recombinationDescriptor;
 	HashMap<String, Object> mutationDescriptor;
+	HashMap<String, Object> survivorSelectionDescriptor;
 	ArrayList<String> individualDescriptor;
 	EA optimizer;
 	
@@ -21,8 +23,10 @@ public class player32 implements ContestSubmission
 		rnd_ = new Random();
 		
 		this.EAParams = Config.getEAParams();
+		this.parentsSelectionDescriptor = Config.getParentsSelectionDescriptor();
 		this.recombinationDescriptor = Config.getRecombinationDescriptor();
 		this.mutationDescriptor = Config.getMutationDescriptor();
+		this.survivorSelectionDescriptor = Config.getSurvivorSelectionDescriptor();
 		this.individualDescriptor = Config.getIndividualDescriptor(); 
 	}
 	
@@ -58,7 +62,15 @@ public class player32 implements ContestSubmission
     
 	public void run() {
 
-		this.optimizer = new EA(this.evaluation, this.EAParams, this.recombinationDescriptor, this.mutationDescriptor, this.individualDescriptor);
+		this.optimizer = new EA(
+			this.evaluation, 
+			this.EAParams, 
+			this.parentsSelectionDescriptor,
+			this.recombinationDescriptor, 
+			this.mutationDescriptor, 
+			this.survivorSelectionDescriptor,
+			this.individualDescriptor
+		);
 
 		try {
         	while(true) {

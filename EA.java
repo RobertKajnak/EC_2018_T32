@@ -7,14 +7,15 @@ public class EA {
     private CompetitionCustomPack evaluation;
 
     private HashMap<String, Object> EAParams;
+    private HashMap<String, Object> parentsSelectionDescriptor;
     private HashMap<String, Object> recombinationDescriptor;
     private HashMap<String, Object> mutationDescriptor;
+    private HashMap<String, Object> survivorSelectionDescriptor;
     private ArrayList<String> individualDescriptor;
 
     private Integer populationSize;      // number of individuals
+    private Integer offspringSize;       // number of children
     private Double mutationRate;         // percentage of mutants
-    private Double parentsRatio;         // percentage of individual that becomes a parent
-    private Double parentsSurvivalRatio; // percentage of parents that survive after replacement
 
     private ArrayList<Individual> population;
     private ArrayList<Individual> parents;
@@ -23,23 +24,28 @@ public class EA {
     private Random RNG;
     private Individual previousBest;
 
-    public EA(CompetitionCustomPack evaluation, HashMap<String, Object> EAParams, HashMap<String, Object> recombinationDescriptor, HashMap<String, Object> mutationDescriptor, ArrayList<String> individualDescriptor) {
+    public EA(
+        CompetitionCustomPack evaluation, 
+        HashMap<String, Object> EAParams, 
+        HashMap<String, Object> parentsSelectionDescriptor,
+        HashMap<String, Object> recombinationDescriptor, 
+        HashMap<String, Object> mutationDescriptor, 
+        HashMap<String, Object> survivorSelectionDescriptor,
+        ArrayList<String> individualDescriptor) {
+
         this.evaluation = evaluation;
 
         // Global EA parameters
         this.EAParams = EAParams;
-    	this.populationSize = (Integer) EAParams.get("populationSize");
+        this.populationSize = (Integer) EAParams.get("populationSize");
+        this.offspringSize = (Integer) EAParams.get("offspringSize");
         this.mutationRate = (Double) EAParams.get("mutationRate");
-        this.parentsRatio = (Double) EAParams.get("parentsRatio");
-        this.parentsSurvivalRatio = (Double) EAParams.get("parentsSurvivalRatio");
-
+        
+        this.parentsSelectionDescriptor = parentsSelectionDescriptor;
         this.recombinationDescriptor = recombinationDescriptor;
         this.mutationDescriptor = mutationDescriptor;
+        this.survivorSelectionDescriptor = survivorSelectionDescriptor;
         this.individualDescriptor = individualDescriptor; 
-        
-        // checks
-        this.parentsRatio = this.parentsRatio > 1 ? 1 : this.parentsRatio < 0 ? 0 : this.parentsRatio;
-        this.parentsSurvivalRatio = this.parentsSurvivalRatio > 1 ? 1 : this.parentsSurvivalRatio < 0 ? 0 : this.parentsSurvivalRatio;
 
         // helpers
         this.previousBest = null;
@@ -94,28 +100,23 @@ public class EA {
         this.parents    = this.selectParents();
         this.offspring  = this.recombine(this.parents);
         this.offspring  = this.mutate(this.offspring);
-        this.population = this.selectSurvivors(this.parents, this.offspring);
+        this.population = this.selectSurvivors(this.population, this.offspring);
     }
 
     private ArrayList<Individual> selectParents() throws NotEnoughEvaluationsException {
-        this.sortByFitness();
-        int numParents = (int) (this.populationSize * this.parentsRatio);
-        ArrayList<Individual> parents = new ArrayList<Individual>(this.population.subList(0, numParents));
+        
+        HashMap<String, Object> params = (HashMap<String, Object>) this.parentsSelectionDescriptor.get("params");
+        ArrayList<Individual> parents = ((ParentsSelectionFunctionInterface) this.parentsSelectionDescriptor.get("call")).execute(this.population, params);
 
         return parents; 
     }
 
-    /*
-    *  Operators implemented:
-    *      - One point crossover
-    */
     private ArrayList<Individual> recombine(ArrayList<Individual> parents) {
         offspring = new ArrayList<Individual>();
         
-        int numChildren = (int) (this.populationSize * this.parentsRatio);
-        for (int i=0; i<numChildren; i++) {
-            Individual mom = parents.get(this.RNG.nextInt(numChildren));
-            Individual dad = parents.get(this.RNG.nextInt(numChildren));
+        for (int i=0; i<this.offspringSize; i++) {
+            Individual mom = parents.get(this.RNG.nextInt(parents.size()));
+            Individual dad = parents.get(this.RNG.nextInt(parents.size()));
             
             @SuppressWarnings("unchecked")
             HashMap<String, Object> params = (HashMap<String, Object>) this.recombinationDescriptor.get("params");
@@ -129,14 +130,6 @@ public class EA {
         return offspring;
     }
 
-    /*
-    *  Operators implemented:
-    *      - Uniform Mutation
-    *      - Gaussina Mutation
-    *      - Uncorrelated 1 step size Mutation
-    *      - Uncorrelated N step sizes Mutation
-    *      - Correlated N step sizes Mutation - Not working due to a bug (SecurityException: Attempting to create a class loader!)
-    */
     private ArrayList<Individual> mutate(ArrayList<Individual> offspring) {
         for (int i=0; i<offspring.size(); i++) {
             HashMap<String, Object> genotype = offspring.get(i).getGenotype();
@@ -152,22 +145,11 @@ public class EA {
         return offspring;
     }
 
-    private ArrayList<Individual> selectSurvivors(ArrayList<Individual> parents, ArrayList<Individual> offspring) throws NotEnoughEvaluationsException {
-        // sortByFitness(); // there's no need to sort it again. You already sorted it when you selected parents. - Giuseppe
-        this.population = new ArrayList<Individual>(parents);
-        this.population.addAll(offspring);
-        
-        ///If there are too many ppl cut the worst performing of
-        if (this.population.size() > this.populationSize){
-        	this.sortByFitness();
-            this.population = Selector.selectFirst(this.population, this.populationSize);
-        }
-        else if (this.population.size() < populationSize) {
-            /// Otherwise fill the population with random new ppl
-            fillEmptyIndividualSlots(this.individualDescriptor);
-        }
-
-        return this.population;  
+    private ArrayList<Individual> selectSurvivors(ArrayList<Individual> population, ArrayList<Individual> offspring) throws NotEnoughEvaluationsException {
+        HashMap<String, Object> params = (HashMap<String, Object>) this.survivorSelectionDescriptor.get("params");
+        params.put("evaluation", this.evaluation);
+        this.population = ((SurvivorSelectionFunctionInterface) this.survivorSelectionDescriptor.get("call")).execute(population, offspring, params);
+        return this.population;
     }
 
     public Individual getBestIndividual() {
@@ -180,17 +162,15 @@ public class EA {
 		}
     }
 
-    ///Wrapper function for sorting
     private void sortByFitness() throws NotEnoughEvaluationsException {
-    	///I tried going through the list and checking if it is already sorted, but it only increases execution time
-    	int cost=0;
-    	for (Individual ind : population) {
-    		if (!ind.isEvaluated()) {
-    			cost++;
-    		}
-    	}
-    	if (cost>evaluation.evaluationsRemaining())
-    		throw new NotEnoughEvaluationsException();
+        int cost=0;
+        for (Individual ind : this.population) {
+            if (!ind.isEvaluated()) {
+                cost++;
+            }
+        }
+        if (cost>this.evaluation.evaluationsRemaining())
+            throw new NotEnoughEvaluationsException();
         Collections.sort(this.population);
     }
 }
