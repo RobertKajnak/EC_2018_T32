@@ -15,7 +15,7 @@ public class Mutator {
         
         Double[] coords = (Double[]) genotype.get("coords"); 
         for (int i=0; i<10; i++) {
-            if (rnd.nextDouble() > mutationRate) { // not sure this condition should be checked - Giuseppe
+            if (rnd.nextDouble() < mutationRate) { // not sure this condition should be checked - Giuseppe
                 coords[i] = coords[i] + width * (rnd.nextDouble() - 0.5);
                 coords[i] = Math.min(5, Math.max(-5, coords[i]));
             }
@@ -33,7 +33,7 @@ public class Mutator {
         
         Double[] coords = (Double[]) genotype.get("coords");
         for (int i=0; i<10; i++) {
-            if (rnd.nextDouble() > mutationRate) { // not sure this condition should be checked - Giuseppe
+            if (rnd.nextDouble() < mutationRate) { // not sure this condition should be checked - Giuseppe
                 coords[i] = coords[i] + sigma * rnd.nextGaussian();
                 coords[i] = Math.min(5, Math.max(-5, coords[i]));
             }
@@ -45,8 +45,6 @@ public class Mutator {
 
     public static HashMap<String, Object> uncorrelated_1_stepSize(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         Random rnd = new Random();
-
-        Double mutationRate = (Double) params.get("mutationRate");
         
         // same for all the coordinates
         Double tau = 1.0 / Math.sqrt(10);
@@ -56,10 +54,8 @@ public class Mutator {
         
         Double[] coords = (Double[]) genotype.get("coords");
         for (int i=0; i<10; i++) {
-            if (rnd.nextDouble() > mutationRate) { // not sure this condition should be checked - Giuseppe
-                coords[i] = coords[i] + stepSize * rnd.nextGaussian();
-                coords[i] = Math.min(5, Math.max(-5, coords[i]));
-            }
+            coords[i] = coords[i] + stepSize * rnd.nextGaussian();
+            coords[i] = Math.min(5, Math.max(-5, coords[i]));
         }
 
         genotype.put("coords", coords);
@@ -70,8 +66,6 @@ public class Mutator {
     public static HashMap<String, Object> uncorrelated_N_stepSizes(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         Random rnd = new Random();
 
-        Double mutationRate = (Double) params.get("mutationRate");
-
         Double tau = 1.0 / Math.sqrt(2 * Math.sqrt(10));
         Double tauPrime = 1.0 / Math.sqrt(2 * 10);
         Double commonDistribution = tauPrime * rnd.nextGaussian();
@@ -79,12 +73,10 @@ public class Mutator {
         Double[] stepSizes = (Double[]) genotype.get("stepSizes");
         Double[] coords = (Double[]) genotype.get("coords");
         for (int i=0; i<10; i++) {
-            if (rnd.nextDouble() > mutationRate) { // not sure this condition should be checked - Giuseppe
-                stepSizes[i] = stepSizes[i] * Math.exp(commonDistribution + tau * rnd.nextGaussian());
-                stepSizes[i] = Math.max(stepSizes[i], 0.05); // <-- it sets the minimum standard deviation
-                coords[i] = coords[i] + stepSizes[i] * rnd.nextGaussian();
-                coords[i] = Math.min(5, Math.max(-5, coords[i]));
-            }
+            stepSizes[i] = stepSizes[i] * Math.exp(commonDistribution + tau * rnd.nextGaussian());
+            stepSizes[i] = Math.max(stepSizes[i], 0.05); // <-- it sets the minimum standard deviation
+            coords[i] = coords[i] + stepSizes[i] * rnd.nextGaussian();
+            coords[i] = Math.min(5, Math.max(-5, coords[i]));
         }
 
         genotype.put("coords", coords);
