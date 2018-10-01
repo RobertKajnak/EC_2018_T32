@@ -24,7 +24,7 @@ public class Config {
     // #### PARENTS SELECTION PARAMETERS ####
 
     // -<--- mu + lambda --->-
-    private static final Double parentsRatio = 0.02;
+    private static final Double parentsRatio = 0.015;
 
 
 
@@ -53,7 +53,8 @@ public class Config {
     private static final Double width = 0.07; 
 
     // -<--- Gaussian Mutation --->-
-    private static final Double sigma = 0.09;
+    private static final Double sigma = 0.25;
+    private static final Boolean variable = true;
 
     // -<--- Uncorrelated 1 stepSize Mutation --->-
     // none
@@ -179,6 +180,7 @@ public class Config {
             case "gaussian":
                 params.put("mutationRate", mutationRate);
                 params.put("sigma", sigma);
+                params.put("variable", variable);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.gaussian(genotype, params);}
