@@ -136,7 +136,7 @@ public class EA {
 
             @SuppressWarnings("unchecked")
             HashMap<String, Object> params = (HashMap<String, Object>) this.mutationDescriptor.get("params");
-            if ( (Boolean) params.get("variable")) {
+            if ( params.containsKey("variable") && (Boolean) params.get("variable")) {
                 params.put("evaluation", this.evaluation);
             }
             HashMap<String, Object> mutatedGenotype = ((MutationFunctionInterface)this.mutationDescriptor.get("call")).execute(genotype, params);
