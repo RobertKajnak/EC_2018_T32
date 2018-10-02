@@ -99,6 +99,14 @@ Once you've created your new operator, do:
 9. Add new `if` cases to initialize your new Individual's specific parameters;
 10. Enjoy :)
 
+### Supported parents selection operators
+
+ - [x] Fitness Proportional Selector (FPS)
+ - [ ] FPS with Windowing
+ - [ ] FPS with sigma scaling
+ - [x] Ranking selector
+ - [ ] Tournament Selector 
+
 ### Supported recombination operators
 
  - [x] One-point Crossover
@@ -117,6 +125,16 @@ Once you've created your new operator, do:
  - [x] Uncorrelated one step size
  - [x] Uncorrelated N step sizes
  - [x] Correlated N step sizes
+ 
+### Supported survival selection operators
+
+ - [x] (Mu+lambda)-selector
+ - [ ] (Mu,lambda)-selector
+ 
+### Sampling methods
+
+ - [x] Roulette Wheel
+ - [x] Stochastically Universal Sampling (SUS)
 
  ### Note
  The `correlated_N_stepSizes` mutation operator does not compile. It throws a `SecurityException` with the message "*Attempting to create a class loader!*" caused by the statement:
