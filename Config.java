@@ -1,3 +1,29 @@
+/*
+ * Available operators' name:
+ * 
+ *  Parents selector operators' names:
+ *   - best_K_selector
+ *   - fitness_proportional_selector
+ *   - ranking_selector
+ * 
+ *  Recombination operators' names;
+ *   - onePointCrossover
+ *   - simpleArithmeticCrossover
+ *   - singleArithmeticCrossover
+ *   - wholeArithmeticCrossover
+ *   - blendCrossover
+ *  
+ *  Mutation operators' names:
+ *   - uniform
+ *   - gaussian
+ *   - uncorrelated_1_stepSize
+ *   - uncorrelated_N_stepSizes
+ *   - correlated_N_stepSizes
+ * 
+ *  Survival selection operators' names:
+ *   - mu_plus_lambda
+*/
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -15,7 +41,7 @@ public class Config {
     private static final String recombinationOperatorName = "onePointCrossover";
 
     /// MUTATION OPERATOR ///
-    private static final String mutationOperatorName = "gaussian";
+    private static final String mutationOperatorName = "uniform";
 
     /// SURVIVOR SELECTION OPERATOR ///
     private static final String survivorSelectionOperatorName = "mu_plus_lambda";
