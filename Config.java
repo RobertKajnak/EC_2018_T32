@@ -5,14 +5,14 @@ public class Config {
 
     /// EA GLOBAL PARAMETERS ///
     private static final Integer populationSize = 100;
-    private static final Integer offspringSize = 10;
+    private static final Integer offspringSize = 2;
     private static final Double mutationRate = 0.5; // percentage of offspring being mutated
 
     /// PARENTS SELECTION OPERATOR ///
-    private static final String parentsSelectionOperatorName = "best_K_selector";
+    private static final String parentsSelectionOperatorName = "ranking_selector";
 
     /// RECOMBINATION OPERATOR ///
-    private static final String recombinationOperatorName = "blendCrossover";
+    private static final String recombinationOperatorName = "onePointCrossover";
 
     /// MUTATION OPERATOR ///
     private static final String mutationOperatorName = "gaussian";
@@ -28,7 +28,17 @@ public class Config {
 
     // -<--- Fitness Proportional Selector --->-
     private static final Double FPS_parentsRatio = 0.15;
+    private static final String FPS_mapping = "linear";
+    private static final Double FPS_s = 1.5; // must be 1 < s <= 2. Makes sense when using linear mapping.
+    private static final Double FPS_base = 2.718; // it makes sense when exponential mapping is used.
+    private static final String FPS_samplingMethod = "SUS";
 
+    // -<--- Ranking Selector --->-
+    private static final Double RS_parentsRatio = 0.15;
+    private static final String RS_mapping = "exponential";
+    private static final Double RS_s = 1.5;
+    private static final Double RS_base = 2.718;
+    private static final String RS_samplingMethod = "SUS";
 
 
     // #### RECOMBINATION PARAMETERS ####
@@ -56,7 +66,7 @@ public class Config {
     private static final Double width = 0.07; 
 
     // -<--- Gaussian Mutation --->-
-    private static final Double sigma = 0.3;
+    private static final Double sigma = 0.09;
     private static final Boolean variable = true;
 
     // -<--- Uncorrelated 1 stepSize Mutation --->-
@@ -107,9 +117,24 @@ public class Config {
                 break;
             case "fitness_proportional_selector":
                 params.put("parentsRatio", FPS_parentsRatio);
+                params.put("mapping", FPS_mapping);
+                params.put("s", FPS_s);
+                params.put("base", FPS_base);
+                params.put("samplingMethod", FPS_samplingMethod);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
                         return ParentsSelector.fitness_proportional_selector(population, params);}
+                });
+                break;
+            case "ranking_selector":
+                params.put("parentsRatio", RS_parentsRatio);
+                params.put("mapping", RS_mapping);
+                params.put("s", RS_s);
+                params.put("base", RS_base);
+                params.put("samplingMethod", RS_samplingMethod);
+                parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
+                    public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
+                        return ParentsSelector.ranking_selector(population, params);}
                 });
                 break;
             default:

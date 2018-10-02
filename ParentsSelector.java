@@ -16,6 +16,7 @@ public class ParentsSelector {
 
     public static ArrayList<Individual> fitness_proportional_selector(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
         CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
+        String samplingMethod = (String) params.get("samplingMethod");
         Double parentsRatio = (Double) params.get("parentsRatio");
         Integer parentsSize = (int) (parentsRatio * population.size());
 
@@ -30,11 +31,65 @@ public class ParentsSelector {
         for (Individual ind : population) {
             probabilities.add(ind.getFitness() / total_fitness);
         }
-
-        ArrayList<Individual> parents = ParentsSelector.stochastic_universal_sampling(population, probabilities, parentsSize);
+        
+        ArrayList<Individual> parents;
+        if (samplingMethod == "rouletteWheel") {
+            parents = ParentsSelector.rouletteWheel(population, probabilities, parentsSize);
+        }
+        else if (samplingMethod == "SUS") {
+            parents = ParentsSelector.stochastic_universal_sampling(population, probabilities, parentsSize);
+        }
+        else {
+            throw new IllegalArgumentException("The sampling method specified does not exists.");
+        }
 
         return parents;
+    }
 
+    public static ArrayList<Individual> ranking_selector(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
+        CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
+        Double parentsRatio = (Double) params.get("parentsRatio");
+        Double s = (Double) params.get("s");
+        Double base = (Double) params.get("base"); // It makes sense only when sampling method == exponential.
+        String mapping = (String) params.get("mapping");
+        String samplingMethod = (String) params.get("samplingMethod");
+        Integer parentsSize = (int) (parentsRatio * population.size());
+
+        population = ParentsSelector.sortByFitness(evaluation, population);
+
+        Integer populationSize = population.size();
+        ArrayList<Double> probabilities = new ArrayList<Double>();
+        
+        if (mapping == "linear") {
+            for (int i=0; i<populationSize; i++) {
+                Integer rank = populationSize -i -1;            
+                probabilities.add( (2.0-s)/(double)populationSize + (2*rank*(s-1))/(populationSize*(populationSize-1)) );
+            }
+        }
+        else if (mapping == "exponential") {
+            for (int i=0; i<populationSize; i++) {
+                Integer rank = populationSize -i -1;            
+                // Giuseppe: The normalization factor should be correct. Anyway, check it.
+                probabilities.add( (1 - Math.pow(base, -rank)) / (populationSize - (1. - Math.pow(base, -(populationSize))) / (1-Math.pow(base, -1))) );
+            }
+        }
+        else {
+            throw new IllegalArgumentException("The mapping specified does not exists.");
+        }
+
+        // build the mating pool
+        ArrayList<Individual> parents;
+        if (samplingMethod == "rouletteWheel") {
+            parents = ParentsSelector.rouletteWheel(population, probabilities, parentsSize);
+        }
+        else if (samplingMethod == "SUS") {
+            parents = ParentsSelector.stochastic_universal_sampling(population, probabilities, parentsSize);
+        }
+        else {
+            throw new IllegalArgumentException("The sampling method specified does not exists.");
+        }
+
+        return parents;
     }
 
     private static ArrayList<Individual> rouletteWheel(ArrayList<Individual> population, ArrayList<Double> probabilities, Integer parentsSize) {
