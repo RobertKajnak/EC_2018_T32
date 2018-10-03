@@ -16,6 +16,17 @@ public class ParentsSelector {
 
         ArrayList<Integer> parents_ids = new ArrayList<Integer>();
         for (int i=0; i<parentsSize; i++) parents_ids.add(i);
+
+        // DEBUG
+        // System.out.printf("ParentsRatio: %f\n", parentsRatio);
+        // System.out.printf("ParentsSize: %d\n", parentsSize);
+        // System.out.printf("PopulationSize: %d\n", population.size());
+        // System.out.printf("Fitness first individual: %e\n", population.get(0).getFitness());
+        // System.out.printf("Fitness last individual: %e\n", population.get(population.size()-1).getFitness());
+        // System.out.println("Parents_ids and relative fitness:");
+        // for (Integer i : parents_ids) System.out.printf("%d %e\n", i, population.get(i).getFitness());
+        // System.out.println();
+        // System.exit(0);
         
         return parents_ids;
     }
@@ -35,8 +46,19 @@ public class ParentsSelector {
                 contestants.add(new Pair<Integer, Double>(sampleInd_index, population.get(sampleInd_index).getFitness()));
             }
             Collections.sort(contestants);
+            System.out.println("Contestants and relative fitness, after sorting by fitness:");
+            for (int k=0; k<tournamentSize; k++) System.out.printf("%d %e\n", contestants.get(k).first(), contestants.get(k).second());
             parents_ids.add(contestants.get(0).first());
         }
+
+        // DEBUG
+        // System.out.printf("ParentsRatio: %f\n", parentsRatio);
+        // System.out.printf("ParentsSize: %d\n", parentsSize);
+        // System.out.printf("PopulationSize: %d\n", population.size());
+        // System.out.println("Parents_ids and relative fitness:");
+        // for (Integer i : parents_ids) System.out.printf("%d %e\n", i, population.get(i).getFitness());
+        // System.out.println();
+        // System.exit(0);
 
         return parents_ids;
     }
