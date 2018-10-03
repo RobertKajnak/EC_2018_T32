@@ -17,9 +17,10 @@ public class EA {
     private Integer offspringSize;       // number of children
     private Double mutationRate;         // percentage of mutants
     private Double parentsRatio;         // percentage of parents
+    private Boolean apply_crowding;
 
     private ArrayList<Individual> population;
-    private ArrayList<Individual> parents;
+    private ArrayList<Integer> parents_ids;
     private ArrayList<Individual> offspring;
     
     private Random RNG;
@@ -42,6 +43,7 @@ public class EA {
         this.offspringSize = (Integer) EAParams.get("offspringSize");
         this.mutationRate = (Double) EAParams.get("mutationRate");
         this.parentsRatio = (Double) EAParams.get("parentsRatio");
+        this.apply_crowding = (Boolean) EAParams.get("apply_crowding");
         
         this.parentsSelectionDescriptor = parentsSelectionDescriptor;
         this.recombinationDescriptor = recombinationDescriptor;
@@ -99,57 +101,94 @@ public class EA {
     }
 
     public void evolve() throws NotEnoughEvaluationsException {
-        this.parents    = this.selectParents();
-        this.offspring  = this.reproduce(this.parents);
+        this.parents_ids    = this.selectParents_ids();
+        this.offspring  = this.reproduce(this.parents_ids);
         // this.offspring  = this.recombine(this.parents);
         // this.offspring  = this.mutate(this.offspring);
         this.population = this.selectSurvivors(this.population, this.offspring);
     }
 
-    private ArrayList<Individual> selectParents() throws NotEnoughEvaluationsException {
+    private ArrayList<Integer> selectParents_ids() throws NotEnoughEvaluationsException {
         
         HashMap<String, Object> params = (HashMap<String, Object>) this.parentsSelectionDescriptor.get("params");
         params.put("evaluation", this.evaluation);
         params.put("parentsRatio", this.parentsRatio);
-        ArrayList<Individual> parents = ((ParentsSelectionFunctionInterface) this.parentsSelectionDescriptor.get("call")).execute(this.population, params);
+        ArrayList<Integer> parents_ids = ((ParentsSelectionFunctionInterface) this.parentsSelectionDescriptor.get("call")).execute(this.population, params);
 
-        return parents; 
+        return parents_ids; 
     }
 
-    private ArrayList<Individual> recombine(ArrayList<Individual> parents) {
-        offspring = new ArrayList<Individual>();
+    private ArrayList<Individual> reproduce(ArrayList<Integer> parents_ids) {
+
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> recombination_params = (HashMap<String, Object>) this.recombinationDescriptor.get("params");
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> mutation_params = (HashMap<String, Object>) this.mutationDescriptor.get("params");
+
+        this.offspring = new ArrayList<Individual>();
+        Pair< HashMap<String, Object>, HashMap<String, Object> > children_genotype;
         
         for (int i=0; i<this.offspringSize; i++) {
-            Individual mom = parents.get(this.RNG.nextInt(parents.size()));
-            Individual dad = parents.get(this.RNG.nextInt(parents.size()));
+            Integer mom_id = this.RNG.nextInt(parents_ids.size());
+            Integer dad_id = this.RNG.nextInt(parents_ids.size());
+            Individual mom = this.population.get(parents_ids.get(mom_id));
+            Individual dad = this.population.get(parents_ids.get(dad_id));
             
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> params = (HashMap<String, Object>) this.recombinationDescriptor.get("params");
-            params.put("evaluation", this.evaluation);
-            Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = ((RecombinationFunctionInterface)this.recombinationDescriptor.get("call")).execute(mom, dad, params);
-            // Pair< HashMap<String, Object>, HashMap<String, Object> > offspringGenotype = Recombinator.onePointCrossover(mom, dad);
+            // recobination
+            children_genotype = this.recombine(mom, dad, recombination_params);
+            
+            // mutation
+            HashMap<String, Object> child_1_genotype = this.mutate(children_genotype.first(), mutation_params);
+            HashMap<String, Object> child_2_genotype = this.mutate(children_genotype.second(), mutation_params);
 
-            offspring.add(new Individual(this.evaluation, offspringGenotype.first()));
-            offspring.add(new Individual(this.evaluation, offspringGenotype.second()));
+            Individual child_1 = new Individual(this.evaluation, child_1_genotype);
+            Individual child_2 = new Individual(this.evaluation, child_2_genotype);
+
+            if (this.apply_crowding) {
+                // compute distances
+                Double mom_c1 = this.compute_distance((Double[])mom.getGenotype().get("coords"), (Double[])child_1_genotype.get("coords"));
+                Double mom_c2 = this.compute_distance((Double[])mom.getGenotype().get("coords"), (Double[])child_2_genotype.get("coords"));
+                Double dad_c1 = this.compute_distance((Double[])dad.getGenotype().get("coords"), (Double[])child_1_genotype.get("coords"));
+                Double dad_c2 = this.compute_distance((Double[])dad.getGenotype().get("coords"), (Double[])child_2_genotype.get("coords"));
+
+                if (mom_c1 + dad_c2 <= mom_c2 + dad_c1) {
+                    if (child_1.getFitness() > mom.getFitness()) {
+                        this.offspring.add(child_1);
+                        this.population.remove(mom_id);
+                    }
+                    if (child_2.getFitness() > dad.getFitness()) {
+                        this.offspring.add(child_2);
+                        this.population.remove(dad_id);
+                    }
+                }
+                else {
+                    if (child_1.getFitness() > dad.getFitness()) {
+                        this.offspring.add(child_1);
+                        this.population.remove(dad_id);
+                    }
+                    if (child_2.getFitness() > mom.getFitness()) {
+                        this.offspring.add(child_2);
+                        this.population.remove(mom_id);
+                    }
+                }
+            }
+            else {
+                offspring.add(child_1);
+                offspring.add(child_2);
+            }
         }
 
         return offspring;
     }
 
-    private ArrayList<Individual> mutate(ArrayList<Individual> offspring) {
-        for (int i=0; i<offspring.size(); i++) {
-            HashMap<String, Object> genotype = offspring.get(i).getGenotype();
+    private Pair< HashMap<String, Object>, HashMap<String, Object> > recombine(Individual mom, Individual dad, HashMap<String, Object> params) {
+        params.put("evaluation", this.evaluation);
+        return ((RecombinationFunctionInterface)this.recombinationDescriptor.get("call")).execute(mom, dad, params);
+    }
 
-            @SuppressWarnings("unchecked")
-            HashMap<String, Object> params = (HashMap<String, Object>) this.mutationDescriptor.get("params");
-            params.put("evaluation", this.evaluation);
-            HashMap<String, Object> mutatedGenotype = ((MutationFunctionInterface)this.mutationDescriptor.get("call")).execute(genotype, params);
-            // HashMap<String, Object> mutatedGenotype = Mutator.gaussian(genotype);
-            Individual mutant = new Individual(this.evaluation, mutatedGenotype);
-            offspring.set(i, mutant);
-        }
-        
-        return offspring;
+    private HashMap<String, Object> mutate(HashMap<String, Object> genotype, HashMap<String, Object> params) {
+        params.put("evaluation", this.evaluation);
+        return ((MutationFunctionInterface)this.mutationDescriptor.get("call")).execute(genotype, params);
     }
 
     private ArrayList<Individual> selectSurvivors(ArrayList<Individual> population, ArrayList<Individual> offspring) throws NotEnoughEvaluationsException {
@@ -179,5 +218,14 @@ public class EA {
         if (cost>this.evaluation.evaluationsRemaining())
             throw new NotEnoughEvaluationsException();
         Collections.sort(this.population);
+    }
+
+    private Double compute_distance(Double[] coords_1, Double[] coords_2) {
+        Double dist = 0.; 
+
+        // I do not compute the sqrt, since it is a monotonically crescent function.
+        for (int i=0; i<10; i++) dist += Math.pow(coords_1[i] - coords_2[i], 2);
+
+        return dist;
     }
 }

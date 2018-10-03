@@ -23,7 +23,7 @@
  * 
  *  Survival selection operators' names:
  *   - mu_plus_lambda
- *   - mu_lambda    s
+ *   - mu_lambda
  *   - round_robin_tournament 
 */
 
@@ -37,15 +37,16 @@ public class Config {
     private static final Integer offspringSize = 2;
     private static final Double mutationRate = 0.15; // percentage of offspring being mutated
     private static final Double parentsRatio = 0.15; // percentage of the population that will reproduce
+    private static final Boolean apply_crowding = true;
 
     /// PARENTS SELECTION OPERATOR ///
-    private static final String parentsSelectionOperatorName = "best_K_selector";
+    private static final String parentsSelectionOperatorName = "ranking_selector";
 
     /// RECOMBINATION OPERATOR ///
     private static final String recombinationOperatorName = "onePointCrossover";
 
     /// MUTATION OPERATOR ///
-    private static final String mutationOperatorName = "uncorrelated_N_stepSizes";
+    private static final String mutationOperatorName = "gaussian";
 
     /// SURVIVOR SELECTION OPERATOR ///
     private static final String survivorSelectionOperatorName = "mu_lambda";
@@ -128,6 +129,7 @@ public class Config {
         EAParams.put("mutationRate", mutationRate);	
         EAParams.put("offspringSize", offspringSize);
         EAParams.put("parentsRatio", parentsRatio);	
+        EAParams.put("apply_crowding", apply_crowding);
 
         return EAParams;
     }
@@ -141,7 +143,7 @@ public class Config {
         switch (parentsSelectionOperatorName) {
             case "best_K_selector":
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
-                    public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) {
+                    public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
                         return ParentsSelector.best_K_selector(population, params);}
                 });
                 break;
@@ -151,7 +153,7 @@ public class Config {
                 params.put("base", FPS_base);
                 params.put("samplingMethod", FPS_samplingMethod);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
-                    public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
+                    public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
                         return ParentsSelector.fitness_proportional_selector(population, params);}
                 });
                 break;
@@ -161,14 +163,14 @@ public class Config {
                 params.put("base", RS_base);
                 params.put("samplingMethod", RS_samplingMethod);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
-                    public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
+                    public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
                         return ParentsSelector.ranking_selector(population, params);}
                 });
                 break;
             case "tournament_selector":
                 params.put("tournamentSize", parents_tournamentSize);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
-                    public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
+                    public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
                         return ParentsSelector.tournament_selector(population, params);}
                 });
                 break;
