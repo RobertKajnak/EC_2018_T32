@@ -16,6 +16,7 @@ public class EA {
     private Integer populationSize;      // number of individuals
     private Integer offspringSize;       // number of children
     private Double mutationRate;         // percentage of mutants
+    private Double parentsRatio;         // percentage of parents
 
     private ArrayList<Individual> population;
     private ArrayList<Individual> parents;
@@ -40,6 +41,7 @@ public class EA {
         this.populationSize = (Integer) EAParams.get("populationSize");
         this.offspringSize = (Integer) EAParams.get("offspringSize");
         this.mutationRate = (Double) EAParams.get("mutationRate");
+        this.parentsRatio = (Double) EAParams.get("parentsRatio");
         
         this.parentsSelectionDescriptor = parentsSelectionDescriptor;
         this.recombinationDescriptor = recombinationDescriptor;
@@ -75,12 +77,12 @@ public class EA {
             }
 
             if (individualDescriptor.contains("stepSize"))
-                genotype.put("stepSize", new Double(0.));
+                genotype.put("stepSize", new Double(1.));
 
             if (individualDescriptor.contains("stepSizes")) {
                 Double[] stepSizes = new Double[10];
                 for (int j=0; j<10; j++) 
-                    stepSizes[j] = new Double(0.);
+                    stepSizes[j] = new Double(1.);
                 genotype.put("stepSizes", stepSizes);
             }
 
@@ -88,7 +90,7 @@ public class EA {
                 Double[][] alphas = new Double[10][10];
                 for (int j=0; j<10; j++) 
                     for (int k=0; k<10; k++)
-                        alphas[j][k] = new Double(0.);
+                        alphas[j][k] = new Double(0.0);
                 genotype.put("alphas", alphas);
             }
             
@@ -98,8 +100,9 @@ public class EA {
 
     public void evolve() throws NotEnoughEvaluationsException {
         this.parents    = this.selectParents();
-        this.offspring  = this.recombine(this.parents);
-        this.offspring  = this.mutate(this.offspring);
+        this.offspring  = this.reproduce(this.parents);
+        // this.offspring  = this.recombine(this.parents);
+        // this.offspring  = this.mutate(this.offspring);
         this.population = this.selectSurvivors(this.population, this.offspring);
     }
 
@@ -107,6 +110,7 @@ public class EA {
         
         HashMap<String, Object> params = (HashMap<String, Object>) this.parentsSelectionDescriptor.get("params");
         params.put("evaluation", this.evaluation);
+        params.put("parentsRatio", this.parentsRatio);
         ArrayList<Individual> parents = ((ParentsSelectionFunctionInterface) this.parentsSelectionDescriptor.get("call")).execute(this.population, params);
 
         return parents; 

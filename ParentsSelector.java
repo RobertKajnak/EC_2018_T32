@@ -14,6 +14,27 @@ public class ParentsSelector {
         return new ArrayList<Individual>(population.subList(0, parentsSize));
     }
 
+    public static ArrayList<Individual> tournament_selector(ArrayList<Individual> population, HashMap<String, Object> params) {
+        CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
+        Integer tournamentSize = (Integer) params.get("tournamentSize");
+        Double parentsRatio = (Double) params.get("parentsRatio");
+        Integer parentsSize = (int) (parentsRatio * population.size());
+        Random rnd = new Random();
+
+        ArrayList<Individual> parents = new ArrayList<Individual>();
+        for (int i=0; i<parentsSize; i++) {
+            ArrayList<Pair<Integer, Double>> contestants = new ArrayList<Pair<Integer, Double>>();
+            for (int j=0; j<tournamentSize; j++) {
+                Integer sampleInd_index = rnd.nextInt(population.size());
+                contestants.add(new Pair<Integer, Double>(sampleInd_index, population.get(sampleInd_index).getFitness()));
+            }
+            Collections.sort(contestants);
+            parents.add(population.get(contestants.get(0).first()));
+        }
+
+        return parents;
+    }
+
     public static ArrayList<Individual> fitness_proportional_selector(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
         CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
         String samplingMethod = (String) params.get("samplingMethod");
@@ -70,7 +91,8 @@ public class ParentsSelector {
             for (int i=0; i<populationSize; i++) {
                 Integer rank = populationSize -i -1;            
                 // Giuseppe: The normalization factor should be correct. Anyway, check it.
-                probabilities.add( (1 - Math.pow(base, -rank)) / (populationSize - (1. - Math.pow(base, -(populationSize))) / (1-Math.pow(base, -1))) );
+                probabilities.add( (1 - Math.pow(base, -rank)) );
+                // System.out.printf("fitness: %e, rank: %d, prob: %e\n", population.get(i).getFitness(), rank, probabilities.get(i));
             }
         }
         else {
@@ -88,6 +110,10 @@ public class ParentsSelector {
         else {
             throw new IllegalArgumentException("The sampling method specified does not exists.");
         }
+
+        // for (int i = 0; i<parentsSize; i++) {
+        //     System.out.printf("%e\t%e\n", population.get(i).getFitness(), parents.get(i).getFitness());
+        // }
 
         return parents;
     }
@@ -126,14 +152,25 @@ public class ParentsSelector {
             cumProb += prob;
             cumulativeProbability.add(cumProb);
         }
+        // System.out.println(cumulativeProbability.get(population.size()-1));
+        if (Math.abs(cumulativeProbability.get(population.size()-1)-1) > 1e-4) {
+            // System.out.println("#####################################");
+            for (int i=0; i<population.size(); i++) cumulativeProbability.set(i, cumulativeProbability.get(i)/cumulativeProbability.get(population.size()-1));
+        }
+        
+        // for (int i = 0; i < population.size(); i++) {
+        //     System.out.printf("Fitness: %.6e, probability: %f, cum. probability: %f\n", population.get(i).getFitness(), probabilities.get(i), cumulativeProbability.get(i));
+        // }
 
         ArrayList<Individual> parents = new ArrayList<Individual>();
         Individual parent;
         Double sample = rnd.nextDouble() / parentsSize;
+        // System.out.printf("Sample is: %f\n", sample);
         Integer numOfGeneratedParents = 0;
         Integer i = 0;
         while (numOfGeneratedParents < parentsSize) {
             while (sample < cumulativeProbability.get(i)) {
+                // System.err.printf("Sample is: %f, i: %d, cum.prob: %f\n", sample, i, cumulativeProbability.get(i));
                 parent = population.get(i);
                 parents.add(parent);
                 sample += 1. / parentsSize;

@@ -5,6 +5,7 @@
  *   - best_K_selector
  *   - fitness_proportional_selector
  *   - ranking_selector
+ *   - tournament_selector
  * 
  *  Recombination operators' names;
  *   - onePointCrossover
@@ -22,6 +23,8 @@
  * 
  *  Survival selection operators' names:
  *   - mu_plus_lambda
+ *   - mu_lambda    s
+ *   - round_robin_tournament 
 */
 
 import java.util.ArrayList;
@@ -32,40 +35,41 @@ public class Config {
     /// EA GLOBAL PARAMETERS ///
     private static final Integer populationSize = 100;
     private static final Integer offspringSize = 2;
-    private static final Double mutationRate = 0.5; // percentage of offspring being mutated
+    private static final Double mutationRate = 0.15; // percentage of offspring being mutated
+    private static final Double parentsRatio = 0.15; // percentage of the population that will reproduce
 
     /// PARENTS SELECTION OPERATOR ///
-    private static final String parentsSelectionOperatorName = "ranking_selector";
+    private static final String parentsSelectionOperatorName = "best_K_selector";
 
     /// RECOMBINATION OPERATOR ///
     private static final String recombinationOperatorName = "onePointCrossover";
 
     /// MUTATION OPERATOR ///
-    private static final String mutationOperatorName = "uniform";
+    private static final String mutationOperatorName = "uncorrelated_N_stepSizes";
 
     /// SURVIVOR SELECTION OPERATOR ///
-    private static final String survivorSelectionOperatorName = "mu_plus_lambda";
+    private static final String survivorSelectionOperatorName = "mu_lambda";
 
 
     // #### PARENTS SELECTION PARAMETERS ####
 
     // -<--- best_K_selector --->-
-    private static final Double bestK_parentsRatio = 0.15;
+    // none
 
     // -<--- Fitness Proportional Selector --->-
-    private static final Double FPS_parentsRatio = 0.15;
     private static final String FPS_mapping = "linear";
     private static final Double FPS_s = 1.5; // must be 1 < s <= 2. Makes sense when using linear mapping.
     private static final Double FPS_base = 2.718; // it makes sense when exponential mapping is used.
     private static final String FPS_samplingMethod = "SUS";
 
-    // -<--- Ranking Selector --->-
-    private static final Double RS_parentsRatio = 0.15;
+    // -<--- Ranking Selector --->- 
     private static final String RS_mapping = "exponential";
     private static final Double RS_s = 1.5;
-    private static final Double RS_base = 2.718;
+    private static final Double RS_base = 1.036;
     private static final String RS_samplingMethod = "SUS";
 
+    // -<--- tournament_selector --->-
+    private static final Integer parents_tournamentSize = 15;
 
     // #### RECOMBINATION PARAMETERS ####
 
@@ -79,7 +83,7 @@ public class Config {
     private static final Double singleCrossAlpha = 0.5;
 
     // -<--- Whole Arithmetic Crossover --->-
-    private static final Double wholeCrossAlpha = 0.5;
+    private static final Double wholeCrossAlpha = 0.2;
 
     // -<--- Blend Arithmetic Crossover --->-
     private static final Double blendCrossAlpha = 0.5;
@@ -108,21 +112,22 @@ public class Config {
     
     // #### SURVIVAL SELECTION PARAMETERS ####
 
-    // -<--- mu + lambda --->- // TODO
+    // -<--- mu + lambda --->-
     // none
 
-    // -<--- mu lambda --->-   // TODO
+    // -<--- mu, lambda --->-
     // none
 
-    // -<--- round robin tournament --->- // TODO
-    private static final Integer tournamentSize = 10;
+    // -<--- round robin tournament --->-
+    private static final Integer survivor_tournamentSize = 30;
 
     public static HashMap<String, Object> getEAParams() {
         HashMap<String, Object> EAParams = new HashMap<String, Object>();
 
         EAParams.put("populationSize", populationSize);
         EAParams.put("mutationRate", mutationRate);	
-        EAParams.put("offspringSize", offspringSize);	
+        EAParams.put("offspringSize", offspringSize);
+        EAParams.put("parentsRatio", parentsRatio);	
 
         return EAParams;
     }
@@ -135,14 +140,12 @@ public class Config {
 
         switch (parentsSelectionOperatorName) {
             case "best_K_selector":
-                params.put("parentsRatio", bestK_parentsRatio);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) {
                         return ParentsSelector.best_K_selector(population, params);}
                 });
                 break;
             case "fitness_proportional_selector":
-                params.put("parentsRatio", FPS_parentsRatio);
                 params.put("mapping", FPS_mapping);
                 params.put("s", FPS_s);
                 params.put("base", FPS_base);
@@ -153,7 +156,6 @@ public class Config {
                 });
                 break;
             case "ranking_selector":
-                params.put("parentsRatio", RS_parentsRatio);
                 params.put("mapping", RS_mapping);
                 params.put("s", RS_s);
                 params.put("base", RS_base);
@@ -161,6 +163,13 @@ public class Config {
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
                         return ParentsSelector.ranking_selector(population, params);}
+                });
+                break;
+            case "tournament_selector":
+                params.put("tournamentSize", parents_tournamentSize);
+                parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
+                    public ArrayList<Individual> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
+                        return ParentsSelector.tournament_selector(population, params);}
                 });
                 break;
             default:
@@ -285,10 +294,23 @@ public class Config {
                 survivorSelectionDescriptor.put("call", new SurvivorSelectionFunctionInterface() {
                 public ArrayList<Individual> execute(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
                     return SurvivorSelector.mu_plus_lambda(population, offspring, params);}
-            });
-            break;
-        default:
-            throw new NotValidOperatorNameException("You did not provide a valid name for the survivor selection operator.");
+                });
+                break;
+            case "mu_lambda":
+                survivorSelectionDescriptor.put("call", new SurvivorSelectionFunctionInterface() {
+                public ArrayList<Individual> execute(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
+                    return SurvivorSelector.mu_lambda(population, offspring, params);}
+                });
+                break;
+            case "round_robin_tournament":
+                params.put("tournamentSize", survivor_tournamentSize);
+                survivorSelectionDescriptor.put("call", new SurvivorSelectionFunctionInterface() {
+                public ArrayList<Individual> execute(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
+                    return SurvivorSelector.round_robin_tournament(population, offspring, params);}
+                });
+                break;
+            default:
+                throw new NotValidOperatorNameException("You did not provide a valid name for the survivor selection operator.");
         }
 
         survivorSelectionDescriptor.put("params", params);
