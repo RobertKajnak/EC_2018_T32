@@ -108,9 +108,9 @@ public class EA {
 
     public void evolve() throws NotEnoughEvaluationsException {
         this.parents_ids    = this.selectParents_ids();
-        System.out.printf("Fitness first individual: %e\n", population.get(0).getFitness());
-        System.out.printf("Fitness last individual: %e\n", population.get(population.size()-1).getFitness());
-        System.exit(0);
+        // System.out.printf("Fitness first individual: %e\n", population.get(0).getFitness());
+        // System.out.printf("Fitness last individual: %e\n", population.get(population.size()-1).getFitness());
+        // System.exit(0);
         this.offspring  = this.reproduce(this.parents_ids);
         this.population = this.selectSurvivors(this.population, this.offspring);
     }

@@ -46,9 +46,9 @@ public class ParentsSelector {
                 contestants.add(new Pair<Integer, Double>(sampleInd_index, population.get(sampleInd_index).getFitness()));
             }
             Collections.sort(contestants);
-            System.out.println("Contestants and relative fitness, after sorting by fitness:");
-            for (int k=0; k<tournamentSize; k++) System.out.printf("%d %e\n", contestants.get(k).first(), contestants.get(k).second());
             parents_ids.add(contestants.get(0).first());
+            // System.out.println("Contestants and relative fitness, after sorting by fitness:");
+            // for (int k=0; k<tournamentSize; k++) System.out.printf("%d %e\n", contestants.get(k).first(), contestants.get(k).second());
         }
 
         // DEBUG
@@ -76,6 +76,8 @@ public class ParentsSelector {
             total_fitness += ind.getFitness();
         }
 
+        // System.err.printf("Total fitness: %e\n", total_fitness);
+
         ArrayList<Double> probabilities = new ArrayList<Double>();
         for (Individual ind : population) {
             probabilities.add(ind.getFitness() / total_fitness);
@@ -91,6 +93,16 @@ public class ParentsSelector {
         else {
             throw new IllegalArgumentException("The sampling method specified does not exists.");
         }
+
+        // DEBUG
+        // System.out.printf("ParentsRatio: %f\n", parentsRatio);
+        // System.out.printf("ParentsSize: %d\n", parentsSize);
+        // System.out.printf("PopulationSize: %d\n", population.size());
+        // System.out.printf("samplingMethod: %s\n", samplingMethod);
+        // System.out.println("Parents_ids and relative fitness:");
+        // for (Integer i : parents_ids) System.out.printf("%d %e\n", i, population.get(i).getFitness());
+        // System.out.println();
+        // System.exit(0);
 
         return parents_ids;
     }
@@ -117,8 +129,9 @@ public class ParentsSelector {
         }
         else if (mapping == "exponential") {
             for (int i=0; i<populationSize; i++) {
-                Integer rank = populationSize -i -1;            
-                probabilities.add( (1 - Math.pow(base, -rank)) );
+                Integer rank = populationSize -i -1;    
+                //  divided the rank by 10. To see why, try to plot the exponential function with and without 10 for popSize = 100        
+                probabilities.add( (1 - Math.pow(base, -rank/10.)) );
             }
         }
         else {
@@ -136,6 +149,16 @@ public class ParentsSelector {
         else {
             throw new IllegalArgumentException("The sampling method specified does not exists.");
         }
+
+        // DEBUG
+        // System.out.printf("ParentsRatio: %f\n", parentsRatio);
+        // System.out.printf("ParentsSize: %d\n", parentsSize);
+        // System.out.printf("PopulationSize: %d\n", population.size());
+        // System.out.printf("samplingMethod: %s\n", samplingMethod);
+        // System.out.println("Parents_ids and relative fitness:");
+        // for (Integer i : parents_ids) System.out.printf("%d %e\n", i, population.get(i).getFitness());
+        // System.out.println();
+        // System.exit(0);
 
         return parents_ids;
     }
@@ -176,6 +199,11 @@ public class ParentsSelector {
         if (Math.abs(cumulativeProbability.get(population.size()-1)-1) > 1e-4) {
             for (int i=0; i<population.size(); i++) cumulativeProbability.set(i, cumulativeProbability.get(i)/cumulativeProbability.get(population.size()-1));
         }
+
+        // System.out.printf("Fitness, prob. and cum. prob: \n");
+        // for (int i=0; i<population.size(); i++) {
+        //     System.out.printf("%e %f %f\n", population.get(i).getFitness(), probabilities.get(i), cumulativeProbability.get(i));
+        // }
 
         ArrayList<Integer> parents_ids = new ArrayList<Integer>();
         Double sample = rnd.nextDouble() / parentsSize;

@@ -34,9 +34,9 @@ public class Config {
 
     /// EA GLOBAL PARAMETERS ///
     private static final Integer populationSize = 100;
-    private static final Integer offspringSize = 2;
-    private static final Double mutationRate = 0.15; // percentage of offspring being mutated
-    private static final Double parentsRatio = 0.15; // percentage of the population that will reproduce
+    private static final Integer offspringSize = 10;
+    private static final Double mutationRate = 0.101; // percentage of offspring being mutated
+    private static final Double parentsRatio = 0.8; // percentage of the population that will reproduce
     private static final Boolean apply_crowding = true;
 
     /// PARENTS SELECTION OPERATOR ///
@@ -46,10 +46,10 @@ public class Config {
     private static final String recombinationOperatorName = "onePointCrossover";
 
     /// MUTATION OPERATOR ///
-    private static final String mutationOperatorName = "gaussian";
+    private static final String mutationOperatorName = "uncorrelated_N_stepSizes";
 
     /// SURVIVOR SELECTION OPERATOR ///
-    private static final String survivorSelectionOperatorName = "mu_lambda";
+    private static final String survivorSelectionOperatorName = "round_robin_tournament";
 
 
     // #### PARENTS SELECTION PARAMETERS ####
@@ -58,15 +58,12 @@ public class Config {
     // none
 
     // -<--- Fitness Proportional Selector --->-
-    private static final String FPS_mapping = "linear";
-    private static final Double FPS_s = 1.5; // must be 1 < s <= 2. Makes sense when using linear mapping.
-    private static final Double FPS_base = 2.718; // it makes sense when exponential mapping is used.
     private static final String FPS_samplingMethod = "SUS";
 
     // -<--- Ranking Selector --->- 
-    private static final String RS_mapping = "exponential";
-    private static final Double RS_s = 1.5;
-    private static final Double RS_base = 1.036;
+    private static final String mapping = "exponential";
+    private static final Double s = 1.5;
+    private static final Double base = 2.;
     private static final String RS_samplingMethod = "SUS";
 
     // -<--- tournament_selector --->-
@@ -148,9 +145,6 @@ public class Config {
                 });
                 break;
             case "fitness_proportional_selector":
-                params.put("mapping", FPS_mapping);
-                params.put("s", FPS_s);
-                params.put("base", FPS_base);
                 params.put("samplingMethod", FPS_samplingMethod);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
@@ -158,9 +152,9 @@ public class Config {
                 });
                 break;
             case "ranking_selector":
-                params.put("mapping", RS_mapping);
-                params.put("s", RS_s);
-                params.put("base", RS_base);
+                params.put("mapping", mapping);
+                params.put("s", s);
+                params.put("base", base);
                 params.put("samplingMethod", RS_samplingMethod);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
