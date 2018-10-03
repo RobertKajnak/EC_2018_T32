@@ -79,12 +79,12 @@ public class EA {
             }
 
             if (individualDescriptor.contains("stepSize"))
-                genotype.put("stepSize", new Double(1.));
+                genotype.put("stepSize", new Double(this.RNG.nextDouble()));
 
             if (individualDescriptor.contains("stepSizes")) {
                 Double[] stepSizes = new Double[10];
                 for (int j=0; j<10; j++) 
-                    stepSizes[j] = new Double(1.);
+                    stepSizes[j] = new Double(this.RNG.nextDouble());
                 genotype.put("stepSizes", stepSizes);
             }
 
@@ -92,19 +92,26 @@ public class EA {
                 Double[][] alphas = new Double[10][10];
                 for (int j=0; j<10; j++) 
                     for (int k=0; k<10; k++)
-                        alphas[j][k] = new Double(0.0);
+                        alphas[j][k] = new Double(this.RNG.nextDouble());
                 genotype.put("alphas", alphas);
             }
             
             this.population.add(new Individual(this.evaluation, genotype));
         }
+
+        // DEBUG
+        // System.out.printf("Number of Individuals: %d\nGenotype: ", this.population.size());
+        // System.out.println(this.population.get(this.RNG.nextInt(this.population.size())).getGenotype());
+        // System.out.println(java.util.Arrays.toString((Double[])this.population.get(this.RNG.nextInt(this.population.size())).getGenotype().get("coords")));
+        // System.exit(0);
     }
 
     public void evolve() throws NotEnoughEvaluationsException {
         this.parents_ids    = this.selectParents_ids();
+        System.out.printf("Fitness first individual: %e\n", population.get(0).getFitness());
+        System.out.printf("Fitness last individual: %e\n", population.get(population.size()-1).getFitness());
+        System.exit(0);
         this.offspring  = this.reproduce(this.parents_ids);
-        // this.offspring  = this.recombine(this.parents);
-        // this.offspring  = this.mutate(this.offspring);
         this.population = this.selectSurvivors(this.population, this.offspring);
     }
 
@@ -134,7 +141,7 @@ public class EA {
             Individual mom = this.population.get(parents_ids.get(mom_id));
             Individual dad = this.population.get(parents_ids.get(dad_id));
             
-            // recobination
+            // recombination
             children_genotype = this.recombine(mom, dad, recombination_params);
             
             // mutation
