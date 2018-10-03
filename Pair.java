@@ -17,10 +17,12 @@ public class Pair<T1,T2> implements Comparable<Pair> {
     }
 
     public int compareTo(Pair p) {
-        if (p.second() instanceof Integer)
-            return -((int) this.second() - (int)p.second());
-        if (p.second() instanceof Integer)
-            return (int)-((double) this.second() - (double)p.second());
+        if (p.second() instanceof Integer) {
+            return ((int) this.second() > (int)p.second()) ? -1 : 1;
+        }
+        if (p.second() instanceof Double) {
+            return ((double) this.second() > (double)p.second()) ? -1 : 1;
+        }
         else {
             return 0;
         }
