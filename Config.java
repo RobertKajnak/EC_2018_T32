@@ -9,6 +9,7 @@
  * 
  *  Recombination operators' names;
  *   - onePointCrossover
+ *   - multiPointCrossover
  *   - simpleArithmeticCrossover
  *   - singleArithmeticCrossover
  *   - wholeArithmeticCrossover
@@ -29,12 +30,13 @@
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.lang.Math;
 
 public class Config {
 
     /// EA GLOBAL PARAMETERS ///
     private static final Integer populationSize = 100;
-    private static final Integer offspringSize = 2;
+    private static final Integer offspringSize = 200;
     private static final Double mutationRate = 0.15; // percentage of offspring being mutated
     private static final Double parentsRatio = 0.15; // percentage of the population that will reproduce
     private static final Boolean apply_crowding = true;
@@ -43,10 +45,10 @@ public class Config {
     private static final String parentsSelectionOperatorName = "ranking_selector";
 
     /// RECOMBINATION OPERATOR ///
-    private static final String recombinationOperatorName = "onePointCrossover";
+    private static final String recombinationOperatorName = "multiPointCrossover";
 
     /// MUTATION OPERATOR ///
-    private static final String mutationOperatorName = "gaussian";
+    private static final String mutationOperatorName = "uncorrelated_N_stepSizes";
 
     /// SURVIVOR SELECTION OPERATOR ///
     private static final String survivorSelectionOperatorName = "round_robin_tournament";
@@ -64,6 +66,7 @@ public class Config {
     private static final String mapping = "linear";
     private static final Double s = 1.01;
     private static final Double base = 2.;
+    private static final Double ranking_scaling_factor = 10.;
     private static final String RS_samplingMethod = "SUS";
 
     // -<--- tournament_selector --->-
@@ -75,7 +78,7 @@ public class Config {
     // none
 
     // -<--- Multi-point Crossover --->-
-    // none
+    private static final Integer n_points = 3;
 
     // -<--- Simple Arithmetic Crossover --->-
     private static final Double simpleCrossAlpha = 0.5;
@@ -101,10 +104,12 @@ public class Config {
     private static final Boolean variable = true;
 
     // -<--- Uncorrelated 1 stepSize Mutation --->-
-    // none
+    private static final Double one_step_tau = 1.0 / Math.sqrt(2 * Math.sqrt(10));
 
     // -<--- Uncorrelated N stepSizes Mutation --->-
-    // none
+    private static final Double N_steps_tau = 1.0 / Math.sqrt(2 * Math.sqrt(10));
+    private static final Double tauPrime = 50.0 / Math.sqrt(2 * 10);
+    private static final Double min_std = 0.;
 
     // -<--- Correlated N stepSizes Mutation --->-
     // none
@@ -159,6 +164,7 @@ public class Config {
                 params.put("s", s);
                 params.put("base", base);
                 params.put("samplingMethod", RS_samplingMethod);
+                params.put("ranking_scaling_factor", ranking_scaling_factor);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
                         return ParentsSelector.ranking_selector(population, params);}
@@ -194,6 +200,7 @@ public class Config {
                 });
                 break;
             case "multiPointCrossover":
+                params.put("n_points", n_points);
                 recombinationDescriptor.put("call", new RecombinationFunctionInterface() {
                     public Pair< HashMap<String, Object>, HashMap<String, Object> > execute(Individual mom, Individual dad, HashMap<String, Object> params) 
                         {return Recombinator.multiPointCrossover(mom, dad, params);}
@@ -262,12 +269,16 @@ public class Config {
                 });
                 break;
             case "uncorrelated_1_stepSize":
+                params.put("tau", one_step_tau);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uncorrelated_1_stepSize(genotype, params);}
                 });
                 break;
             case "uncorrelated_N_stepSizes":
+                params.put("tau", N_steps_tau);
+                params.put("tauPrime", tauPrime);
+                params.put("min_std", min_std);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uncorrelated_N_stepSizes(genotype, params);}

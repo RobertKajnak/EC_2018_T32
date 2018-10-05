@@ -52,7 +52,8 @@ public class Mutator {
         Random rnd = new Random();
         
         // same for all the coordinates
-        Double tau = 1.0 / Math.sqrt(10);
+        Double tau = (Double) params.get("tau");
+
         Double stepSize = (Double) genotype.get("stepSize");
         stepSize = stepSize * Math.exp(tau * rnd.nextGaussian());
         stepSize = Math.max(stepSize, 0.05); // <-- it sets the minimum standard deviation
@@ -71,15 +72,16 @@ public class Mutator {
     public static HashMap<String, Object> uncorrelated_N_stepSizes(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         Random rnd = new Random();
 
-        Double tau = 1.0 / Math.sqrt(2 * Math.sqrt(10));
-        Double tauPrime = 1.0 / Math.sqrt(2 * 10);
+        Double min_std = (Double) params.get("min_std");
+        Double tau = (Double) params.get("tau");
+        Double tauPrime = (Double) params.get("tauPrime");
         Double commonDistribution = tauPrime * rnd.nextGaussian();
 
         Double[] stepSizes = (Double[]) genotype.get("stepSizes");
         Double[] coords = (Double[]) genotype.get("coords");
         for (int i=0; i<10; i++) {
             stepSizes[i] = stepSizes[i] * Math.exp(commonDistribution + tau * rnd.nextGaussian());
-            stepSizes[i] = Math.max(stepSizes[i], 0.00001); // <-- it sets the minimum standard deviation
+            stepSizes[i] = Math.max(stepSizes[i], min_std);
             coords[i] = coords[i] + stepSizes[i] * rnd.nextGaussian();
             coords[i] = Math.min(5, Math.max(-5, coords[i]));
         }

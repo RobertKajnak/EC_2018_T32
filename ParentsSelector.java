@@ -114,6 +114,7 @@ public class ParentsSelector {
         Double base = (Double) params.get("base"); // It makes sense only when sampling method == exponential.
         String mapping = (String) params.get("mapping");
         String samplingMethod = (String) params.get("samplingMethod");
+        Double ranking_scaling_factor = (Double) params.get("ranking_scaling_factor"); 
         Integer parentsSize = (int) (parentsRatio * population.size());
 
         population = ParentsSelector.sortByFitness(evaluation, population);
@@ -131,7 +132,7 @@ public class ParentsSelector {
             for (int i=0; i<populationSize; i++) {
                 Integer rank = populationSize -i -1;    
                 //  divided the rank by 10. To see why, try to plot the exponential function with and without 10 for popSize = 100        
-                probabilities.add( (1 - Math.pow(base, -rank/10.)) );
+                probabilities.add( (1 - Math.pow(base, -rank/ranking_scaling_factor)) );
             }
         }
         else {

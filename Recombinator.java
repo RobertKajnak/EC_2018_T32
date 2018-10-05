@@ -92,6 +92,8 @@ public class Recombinator {
         HashMap<String, Object> childGenotype_1 = new HashMap<String, Object>();
         HashMap<String, Object> childGenotype_2 = new HashMap<String, Object>();
 
+        Integer n_points = (Integer) params.get("n_points");
+
         Random rnd = new Random();
 
         for (String key : momGenotype.keySet()) {
@@ -114,7 +116,6 @@ public class Recombinator {
 
                 ArrayList<Integer> crossoverPoints = new ArrayList<Integer>();
                 Integer crossoverPoint;
-                Integer n_points = rnd.nextInt(3) + 1; // from 1 up to 3 crossover points
                 for (int p=0; p<n_points; p++) {
                     do {
                         crossoverPoint = 1 + rnd.nextInt(numParameters - 2); 
@@ -178,7 +179,6 @@ public class Recombinator {
 
                 ArrayList<Integer> crossoverPoints = new ArrayList<Integer>();
                 Integer crossoverPoint;
-                Integer n_points = rnd.nextInt(3) + 1; // from 1 up to 3 crossover points
                 for (int p=0; p<n_points; p++) {
                     do {
                         crossoverPoint = 1 + rnd.nextInt(numRows - 2); 
