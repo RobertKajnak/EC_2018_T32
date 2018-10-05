@@ -34,9 +34,9 @@ public class Config {
 
     /// EA GLOBAL PARAMETERS ///
     private static final Integer populationSize = 100;
-    private static final Integer offspringSize = 10;
-    private static final Double mutationRate = 0.101; // percentage of offspring being mutated
-    private static final Double parentsRatio = 0.8; // percentage of the population that will reproduce
+    private static final Integer offspringSize = 2;
+    private static final Double mutationRate = 0.15; // percentage of offspring being mutated
+    private static final Double parentsRatio = 0.15; // percentage of the population that will reproduce
     private static final Boolean apply_crowding = true;
 
     /// PARENTS SELECTION OPERATOR ///
@@ -46,7 +46,7 @@ public class Config {
     private static final String recombinationOperatorName = "onePointCrossover";
 
     /// MUTATION OPERATOR ///
-    private static final String mutationOperatorName = "uncorrelated_N_stepSizes";
+    private static final String mutationOperatorName = "gaussian";
 
     /// SURVIVOR SELECTION OPERATOR ///
     private static final String survivorSelectionOperatorName = "round_robin_tournament";
@@ -61,8 +61,8 @@ public class Config {
     private static final String FPS_samplingMethod = "SUS";
 
     // -<--- Ranking Selector --->- 
-    private static final String mapping = "exponential";
-    private static final Double s = 1.5;
+    private static final String mapping = "linear";
+    private static final Double s = 1.01;
     private static final Double base = 2.;
     private static final String RS_samplingMethod = "SUS";
 
@@ -72,6 +72,9 @@ public class Config {
     // #### RECOMBINATION PARAMETERS ####
 
     // -<--- One-point Crossover --->-
+    // none
+
+    // -<--- Multi-point Crossover --->-
     // none
 
     // -<--- Simple Arithmetic Crossover --->-
@@ -188,6 +191,12 @@ public class Config {
                 recombinationDescriptor.put("call", new RecombinationFunctionInterface() {
                     public Pair< HashMap<String, Object>, HashMap<String, Object> > execute(Individual mom, Individual dad, HashMap<String, Object> params) 
                         {return Recombinator.onePointCrossover(mom, dad, params);}
+                });
+                break;
+            case "multiPointCrossover":
+                recombinationDescriptor.put("call", new RecombinationFunctionInterface() {
+                    public Pair< HashMap<String, Object>, HashMap<String, Object> > execute(Individual mom, Individual dad, HashMap<String, Object> params) 
+                        {return Recombinator.multiPointCrossover(mom, dad, params);}
                 });
                 break;
             case "simpleArithmeticCrossover":
@@ -323,6 +332,8 @@ public class Config {
 
 		switch (recombinationOperatorName) {
 			case "onePointCrossover":
+                break;
+            case "multiPointCrossover":
                 break;
             case "simpleArithmeticCrossover":
                 break;
