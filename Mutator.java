@@ -79,7 +79,7 @@ public class Mutator {
         Double[] coords = (Double[]) genotype.get("coords");
         for (int i=0; i<10; i++) {
             stepSizes[i] = stepSizes[i] * Math.exp(commonDistribution + tau * rnd.nextGaussian());
-            stepSizes[i] = Math.max(stepSizes[i], 0.01); // <-- it sets the minimum standard deviation
+            stepSizes[i] = Math.max(stepSizes[i], 0.00001); // <-- it sets the minimum standard deviation
             coords[i] = coords[i] + stepSizes[i] * rnd.nextGaussian();
             coords[i] = Math.min(5, Math.max(-5, coords[i]));
         }
