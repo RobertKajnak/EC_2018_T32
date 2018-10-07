@@ -9,6 +9,7 @@
  * 
  *  Recombination operators' names;
  *   - onePointCrossover
+ *   - multiPointCrossover
  *   - simpleArithmeticCrossover
  *   - singleArithmeticCrossover
  *   - wholeArithmeticCrossover
@@ -29,27 +30,29 @@
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.lang.Math;
 
-public class Config {
+public class Island {
 
     /// EA GLOBAL PARAMETERS ///
-    private static final Integer populationSize = 100;
-    private static final Integer offspringSize = 2;
-    private static final Double mutationRate = 0.15; // percentage of offspring being mutated
-    private static final Double parentsRatio = 0.15; // percentage of the population that will reproduce
-    private static final Boolean apply_crowding = true;
+    protected static final Integer populationSize = Integer.parseInt(System.getProperty("populationSize"));;
+    protected static final Integer offspringSize = Integer.parseInt(System.getProperty("offspringSize"));;
+    protected static final Double mutationRate = Double.parseDouble(System.getProperty("mutationRate")); // percentage of offspring being mutated
+    protected static final Double parentsRatio = Double.parseDouble(System.getProperty("parentsRatio")); // percentage of the population that will reproduce
+    protected static final Boolean apply_crowding = true;
 
-    /// PARENTS SELECTION OPERATOR ///
-    private static final String parentsSelectionOperatorName = "ranking_selector";
+    // /// Actual values for the following parameter are defined in each sub-class (island_1A, island_1B...)
+    // /// PARENTS SELECTION OPERATOR ///
+    // protected String parentsSelectionOperatorName = "";
 
-    /// RECOMBINATION OPERATOR ///
-    private static final String recombinationOperatorName = "onePointCrossover";
+    // /// RECOMBINATION OPERATOR ///
+    // protected String recombinationOperatorName = "";
 
-    /// MUTATION OPERATOR ///
-    private static final String mutationOperatorName = "gaussian";
+    // /// MUTATION OPERATOR ///
+    // protected String mutationOperatorName = "";
 
-    /// SURVIVOR SELECTION OPERATOR ///
-    private static final String survivorSelectionOperatorName = "round_robin_tournament";
+    // /// SURVIVOR SELECTION OPERATOR ///
+    // protected String survivorSelectionOperatorName = "";
 
 
     // #### PARENTS SELECTION PARAMETERS ####
@@ -58,53 +61,59 @@ public class Config {
     // none
 
     // -<--- Fitness Proportional Selector --->-
-    private static final String FPS_samplingMethod = "SUS";
+    protected static final String FPS_samplingMethod = "SUS";
 
     // -<--- Ranking Selector --->- 
-    private static final String mapping = "linear";
-    private static final Double s = 1.01;
-    private static final Double base = 2.;
-    private static final String RS_samplingMethod = "SUS";
+    protected static final String mapping = "linear";
+    protected static final Double s = Double.parseDouble(System.getProperty("s"));
+    protected static final Double base = 2.718;
+    protected static final Double ranking_scaling_factor = Double.parseDouble(System.getProperty("RSscalingFactor"));
+    protected static final String RS_samplingMethod = "SUS";
 
     // -<--- tournament_selector --->-
-    private static final Integer parents_tournamentSize = 15;
+    protected static final Integer parents_tournamentSize =  Integer.parseInt(System.getProperty("tournamentSize"));
 
     // #### RECOMBINATION PARAMETERS ####
+
+    //  -<--- Uniform Crossover --->-
+    // none
 
     // -<--- One-point Crossover --->-
     // none
 
     // -<--- Multi-point Crossover --->-
-    // none
+    protected static final Integer n_points = 3;
 
     // -<--- Simple Arithmetic Crossover --->-
-    private static final Double simpleCrossAlpha = 0.5;
+    protected static final Double simpleCrossAlpha = 0.5;
 
     // -<--- Single Arithmetic Crossover --->-
-    private static final Double singleCrossAlpha = 0.5;
+    protected static final Double singleCrossAlpha = 0.5;
 
     // -<--- Whole Arithmetic Crossover --->-
-    private static final Double wholeCrossAlpha = 0.2;
+    protected static final Double wholeCrossAlpha = 0.2;
 
     // -<--- Blend Arithmetic Crossover --->-
-    private static final Double blendCrossAlpha = 0.5;
+    protected static final Double blendCrossAlpha = 0.5;
 
 
 
     // #### MUTATION PARAMETERS ####
 
     // -<--- Uniform Mutation --->-
-    private static final Double width = 0.07; 
+    protected static final Double width = 0.07; 
 
     // -<--- Gaussian Mutation --->-
-    private static final Double sigma = 0.09;
-    private static final Boolean variable = true;
+    protected static final Double sigma = 0.09;
+    protected static final Boolean variable = true;
 
     // -<--- Uncorrelated 1 stepSize Mutation --->-
-    // none
+    protected static final Double one_step_tau = 1.0 / Math.sqrt(2 * Math.sqrt(10));
 
     // -<--- Uncorrelated N stepSizes Mutation --->-
-    // none
+    protected static final Double N_steps_tau = Double.parseDouble(System.getProperty("tau")) / Math.sqrt(2 * Math.sqrt(10));
+    protected static final Double tauPrime = Double.parseDouble(System.getProperty("tauPrime")) / Math.sqrt(2 * 10);
+    protected static final Double min_std =  Double.parseDouble(System.getProperty("stdMin"));
 
     // -<--- Correlated N stepSizes Mutation --->-
     // none
@@ -120,7 +129,7 @@ public class Config {
     // none
 
     // -<--- round robin tournament --->-
-    private static final Integer survivor_tournamentSize = 30;
+    protected static final Integer survivor_tournamentSize = Integer.parseInt(System.getProperty("RRtournamentSize"));;
 
     public static HashMap<String, Object> getEAParams() {
         HashMap<String, Object> EAParams = new HashMap<String, Object>();
@@ -134,7 +143,7 @@ public class Config {
         return EAParams;
     }
 
-    public static HashMap<String, Object> getParentsSelectionDescriptor() throws NotValidOperatorNameException {
+    public static HashMap<String, Object> getParentsSelectionDescriptor(String parentsSelectionOperatorName) throws NotValidOperatorNameException {
         HashMap<String, Object> parentsSelectionDescriptor = new HashMap<String, Object>();
         HashMap<String, Object> params = new HashMap<String, Object>();
 
@@ -159,6 +168,7 @@ public class Config {
                 params.put("s", s);
                 params.put("base", base);
                 params.put("samplingMethod", RS_samplingMethod);
+                params.put("ranking_scaling_factor", ranking_scaling_factor);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
                         return ParentsSelector.ranking_selector(population, params);}
@@ -180,13 +190,19 @@ public class Config {
         return parentsSelectionDescriptor;
     }
 
-    public static HashMap<String, Object> getRecombinationDescriptor() throws NotValidOperatorNameException {
+    public static HashMap<String, Object> getRecombinationDescriptor(String recombinationOperatorName) throws NotValidOperatorNameException {
         HashMap<String, Object> recombinationDescriptor = new HashMap<String, Object>();
         HashMap<String, Object> params = new HashMap<String, Object>();
 
         recombinationDescriptor.put("operatorName", recombinationOperatorName);
 
         switch (recombinationOperatorName) {
+            case "uniformCrossover":
+                recombinationDescriptor.put("call", new RecombinationFunctionInterface() {
+                    public Pair< HashMap<String, Object>, HashMap<String, Object> > execute(Individual mom, Individual dad, HashMap<String, Object> params) 
+                        {return Recombinator.uniformCrossover(mom, dad, params);}
+                });
+                break;
             case "onePointCrossover":
                 recombinationDescriptor.put("call", new RecombinationFunctionInterface() {
                     public Pair< HashMap<String, Object>, HashMap<String, Object> > execute(Individual mom, Individual dad, HashMap<String, Object> params) 
@@ -194,6 +210,7 @@ public class Config {
                 });
                 break;
             case "multiPointCrossover":
+                params.put("n_points", n_points);
                 recombinationDescriptor.put("call", new RecombinationFunctionInterface() {
                     public Pair< HashMap<String, Object>, HashMap<String, Object> > execute(Individual mom, Individual dad, HashMap<String, Object> params) 
                         {return Recombinator.multiPointCrossover(mom, dad, params);}
@@ -236,7 +253,7 @@ public class Config {
         return recombinationDescriptor;
     }
 
-    public static HashMap<String, Object> getMutationDescriptor() throws NotValidOperatorNameException {
+    public static HashMap<String, Object> getMutationDescriptor(String mutationOperatorName) throws NotValidOperatorNameException {
         HashMap<String, Object> mutationDescriptor = new HashMap<String, Object>();
         HashMap<String, Object> params = new HashMap<String, Object>();
 
@@ -245,7 +262,6 @@ public class Config {
 
         switch (mutationOperatorName) {
             case "uniform":
-                params.put("mutationRate", mutationRate);
                 params.put("width", width);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
@@ -253,7 +269,6 @@ public class Config {
                 });
                 break;
             case "gaussian":
-                params.put("mutationRate", mutationRate);
                 params.put("sigma", sigma);
                 params.put("variable", variable);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
@@ -262,12 +277,16 @@ public class Config {
                 });
                 break;
             case "uncorrelated_1_stepSize":
+                params.put("tau", one_step_tau);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uncorrelated_1_stepSize(genotype, params);}
                 });
                 break;
             case "uncorrelated_N_stepSizes":
+                params.put("tau", N_steps_tau);
+                params.put("tauPrime", tauPrime);
+                params.put("min_std", min_std);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uncorrelated_N_stepSizes(genotype, params);}
@@ -288,7 +307,7 @@ public class Config {
         return mutationDescriptor;
     }
 
-    public static HashMap<String, Object> getSurvivorSelectionDescriptor() throws NotValidOperatorNameException {
+    public static HashMap<String, Object> getSurvivorSelectionDescriptor(String survivorSelectionOperatorName) throws NotValidOperatorNameException {
         HashMap<String, Object> survivorSelectionDescriptor = new HashMap<String, Object>();
         HashMap<String, Object> params = new HashMap<String, Object>();
 
@@ -323,7 +342,7 @@ public class Config {
         return survivorSelectionDescriptor;
     }
 
-    public static ArrayList<String> getIndividualDescriptor() throws NotValidOperatorNameException {
+    public static ArrayList<String> getIndividualDescriptor(String recombinationOperatorName, String mutationOperatorName) throws NotValidOperatorNameException {
         ArrayList<String> individualDescriptor = new ArrayList<String>();
         individualDescriptor.add("coords");
 
