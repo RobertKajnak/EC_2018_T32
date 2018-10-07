@@ -10,29 +10,25 @@ public class player32 implements ContestSubmission
 	Random rnd_;
 	CompetitionCustomPack evaluation;
 	ContestEvaluation evaluation_;
+	String[] islands_names;
 
-	HashMap<String, Object> EAParams;
-	HashMap<String, Object> parentsSelectionDescriptor;
-	HashMap<String, Object> recombinationDescriptor;
-	HashMap<String, Object> mutationDescriptor;
-	HashMap<String, Object> survivorSelectionDescriptor;
-	ArrayList<String> individualDescriptor;
-	EA optimizer;
+	HashMap<String, EA> EAs = new HashMap<String, EA>();
+	HashMap<String, HashMap<String, Object>> EAParams = new HashMap<String, HashMap<String, Object>>();
+	HashMap<String, HashMap<String, Object>> parentsSelectionDescriptor = new HashMap<String, HashMap<String, Object>>();;
+	HashMap<String, HashMap<String, Object>> recombinationDescriptor = new HashMap<String, HashMap<String, Object>>();
+	HashMap<String, HashMap<String, Object>> mutationDescriptor = new HashMap<String, HashMap<String, Object>>();
+	HashMap<String, HashMap<String, Object>> survivorSelectionDescriptor = new HashMap<String, HashMap<String, Object>>();
+	HashMap<String, ArrayList<String>> individualDescriptor = new HashMap<String, ArrayList<String>>();
+	HashMap<String, EAHandler> manager = new HashMap<String, EAHandler>();
 	
 	public player32() throws NotValidOperatorNameException {
-		rnd_ = new Random();
-		
-		this.EAParams = Config.getEAParams();
-		this.parentsSelectionDescriptor = Config.getParentsSelectionDescriptor();
-		this.recombinationDescriptor = Config.getRecombinationDescriptor();
-		this.mutationDescriptor = Config.getMutationDescriptor();
-		this.survivorSelectionDescriptor = Config.getSurvivorSelectionDescriptor();
-		this.individualDescriptor = Config.getIndividualDescriptor(); 
+		this.rnd_ = new Random();
+		this.getIslandsDescriptors();
 	}
 	
 	public void setSeed(long seed) {
 		// Set seed of algortihms random process
-		rnd_.setSeed(seed);
+		this.rnd_.setSeed(seed);
 	}
 
 	public void setEvaluation(ContestEvaluation evaluation) {
@@ -41,7 +37,7 @@ public class player32 implements ContestSubmission
 		this.evaluation = new CompetitionCustomPack(evaluation);
 		System.out.printf("Num. of available evaluations: %d\n", this.evaluation.getEvaluationLimit());
 		// Get evaluation properties
-		//Properties props = evaluation.getProperties(); ///TODO - depr, no longer needed
+		// Properties props = this.evaluation.getProperties(); ///TODO - depr, no longer needed
         // Get evaluation limit
         // evaluations_limit_ = Integer.parseInt(props.getProperty("Evaluations"));
 		// Property keys depend on specific evaluation
@@ -62,23 +58,113 @@ public class player32 implements ContestSubmission
     
 	public void run() {
 
-		this.optimizer = new EA(
-			this.evaluation, 
-			this.EAParams, 
-			this.parentsSelectionDescriptor,
-			this.recombinationDescriptor, 
-			this.mutationDescriptor, 
-			this.survivorSelectionDescriptor,
-			this.individualDescriptor
-		);
+		// define the EAs for each island
+		this.islands_names = new String[] {"Island_1A", "Island_1B", "Island_2A", "Island_2B", "Island_3A", "Island_3B"};
+		for (String island_name : islands_names) {
+			this.EAs.put(island_name, new EA(
+				this.evaluation, 
+				this.EAParams.get(island_name), 
+				this.parentsSelectionDescriptor.get(island_name),
+				this.recombinationDescriptor.get(island_name), 
+				this.mutationDescriptor.get(island_name), 
+				this.survivorSelectionDescriptor.get(island_name),
+				this.individualDescriptor.get(island_name)
+			));
+			this.manager.put(island_name, new EAHandler());
+		}
 
 		try {
+
+			Integer num_of_stopped_EA = 0;
+
         	while(true) {
-				this.optimizer.evolve();
-				System.out.printf("Best individual after %6d evaluations = %6.8e\n", this.evaluation.getCurrentEvaluationCount(), this.optimizer.getBestIndividual().getFitness());
+				for (String island_name : this.islands_names) {
+					if (this.manager.get(island_name).allow_evolution()) {
+						this.EAs.get(island_name).evolve();
+						this.manager.get(island_name).update(this.EAs.get(island_name));
+					}
+					else num_of_stopped_EA += 1;
+				}
+
+				if (num_of_stopped_EA == 6) {
+					throw new NotEnoughEvaluationsException();
+				}
+
+				if (num_of_stopped_EA > 3) {
+					num_of_stopped_EA = 0;
+					// pick the best from each subpopulation and move them into the next subpopulations
+					ArrayList<Individual>[] immigrants = new ArrayList[6];
+					for (int i=0; i<islands_names.length; i++) {
+						immigrants[i] = this.EAs.get(islands_names[i]).getImmigrants(5);
+					}
+					for (int i=0; i<islands_names.length; i++) {
+						String dest_island = islands_names[(i+1) % islands_names.length];
+						this.EAs.get(dest_island).host(immigrants[i]);
+						
+						// allow evolution
+						this.manager.get(islands_names[i]).reset();
+					}
+				}
+
+				// Output
+				System.out.printf("Best individual after %6d evaluations:\n", this.evaluation.getCurrentEvaluationCount());
+				for (String island_name : this.islands_names) {
+					System.out.printf("\t%s - %6.8f\n", island_name, this.EAs.get(island_name).getBestIndividual().getFitness());
+				}
 			}
 		} catch (NotEnoughEvaluationsException e) {
 			// System.out.println(evaluation_.getFinalResult());
 		}
 	}	
+
+	public void getIslandsDescriptors()  throws NotValidOperatorNameException {
+
+		// Island_1A
+		this.EAParams.put("Island_1A", Island_1A.getEAParams());
+		this.parentsSelectionDescriptor.put("Island_1A", Island_1A.getParentsSelectionDescriptor());
+		this.recombinationDescriptor.put("Island_1A", Island_1A.getRecombinationDescriptor());
+		this.mutationDescriptor.put("Island_1A", Island_1A.getMutationDescriptor());
+		this.survivorSelectionDescriptor.put("Island_1A", Island_1A.getSurvivorSelectionDescriptor());
+		this.individualDescriptor.put("Island_1A", Island_1A.getIndividualDescriptor());
+
+		// Island_1B
+		this.EAParams.put("Island_1B", Island_1B.getEAParams());
+		this.parentsSelectionDescriptor.put("Island_1B", Island_1B.getParentsSelectionDescriptor());
+		this.recombinationDescriptor.put("Island_1B", Island_1B.getRecombinationDescriptor());
+		this.mutationDescriptor.put("Island_1B", Island_1B.getMutationDescriptor());
+		this.survivorSelectionDescriptor.put("Island_1B", Island_1B.getSurvivorSelectionDescriptor());
+		this.individualDescriptor.put("Island_1B", Island_1B.getIndividualDescriptor());
+
+		// Island_2A
+		this.EAParams.put("Island_2A", Island_2A.getEAParams());
+		this.parentsSelectionDescriptor.put("Island_2A", Island_2A.getParentsSelectionDescriptor());
+		this.recombinationDescriptor.put("Island_2A", Island_2A.getRecombinationDescriptor());
+		this.mutationDescriptor.put("Island_2A", Island_2A.getMutationDescriptor());
+		this.survivorSelectionDescriptor.put("Island_2A", Island_2A.getSurvivorSelectionDescriptor());
+		this.individualDescriptor.put("Island_2A", Island_2A.getIndividualDescriptor());
+
+		// Island_2B
+		this.EAParams.put("Island_2B", Island_2B.getEAParams());
+		this.parentsSelectionDescriptor.put("Island_2B", Island_2B.getParentsSelectionDescriptor());
+		this.recombinationDescriptor.put("Island_2B", Island_2B.getRecombinationDescriptor());
+		this.mutationDescriptor.put("Island_2B", Island_2B.getMutationDescriptor());
+		this.survivorSelectionDescriptor.put("Island_2B", Island_2B.getSurvivorSelectionDescriptor());
+		this.individualDescriptor.put("Island_2B", Island_2B.getIndividualDescriptor());
+
+		// Island_3A
+		this.EAParams.put("Island_3A", Island_3A.getEAParams());
+		this.parentsSelectionDescriptor.put("Island_3A", Island_3A.getParentsSelectionDescriptor());
+		this.recombinationDescriptor.put("Island_3A", Island_3A.getRecombinationDescriptor());
+		this.mutationDescriptor.put("Island_3A", Island_3A.getMutationDescriptor());
+		this.survivorSelectionDescriptor.put("Island_3A", Island_3A.getSurvivorSelectionDescriptor());
+		this.individualDescriptor.put("Island_3A", Island_3A.getIndividualDescriptor());
+
+		// Island_3B
+		this.EAParams.put("Island_3B", Island_3B.getEAParams());
+		this.parentsSelectionDescriptor.put("Island_3B", Island_3B.getParentsSelectionDescriptor());
+		this.recombinationDescriptor.put("Island_3B", Island_3B.getRecombinationDescriptor());
+		this.mutationDescriptor.put("Island_3B", Island_3B.getMutationDescriptor());
+		this.survivorSelectionDescriptor.put("Island_3B", Island_3B.getSurvivorSelectionDescriptor());
+		this.individualDescriptor.put("Island_3B", Island_3B.getIndividualDescriptor());
+	}
 }

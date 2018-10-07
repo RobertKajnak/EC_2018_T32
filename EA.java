@@ -107,12 +107,9 @@ public class EA {
     }
 
     public void evolve() throws NotEnoughEvaluationsException {
-        this.parents_ids    = this.selectParents_ids();
-        // System.out.printf("Fitness first individual: %e\n", population.get(0).getFitness());
-        // System.out.printf("Fitness last individual: %e\n", population.get(population.size()-1).getFitness());
-        // System.exit(0);
-        this.offspring  = this.reproduce(this.parents_ids);
-        this.population = this.selectSurvivors(this.population, this.offspring);
+        this.parents_ids  = this.selectParents_ids();
+        this.offspring    = this.reproduce(this.parents_ids);
+        this.population   = this.selectSurvivors(this.population, this.offspring);
     }
 
     private ArrayList<Integer> selectParents_ids() throws NotEnoughEvaluationsException {
@@ -125,7 +122,7 @@ public class EA {
         return parents_ids; 
     }
 
-    private ArrayList<Individual> reproduce(ArrayList<Integer> parents_ids) {
+    private ArrayList<Individual> reproduce(ArrayList<Integer> parents_ids) throws NotEnoughEvaluationsException {
 
         @SuppressWarnings("unchecked")
         HashMap<String, Object> recombination_params = (HashMap<String, Object>) this.recombinationDescriptor.get("params");
@@ -134,7 +131,7 @@ public class EA {
 
         this.offspring = new ArrayList<Individual>();
         Pair< HashMap<String, Object>, HashMap<String, Object> > children_genotype;
-        
+
         for (int i=0; i<this.offspringSize; i++) {
             Integer mom_id = this.RNG.nextInt(parents_ids.size());
             Integer dad_id = this.RNG.nextInt(parents_ids.size());
@@ -157,7 +154,7 @@ public class EA {
                 Double mom_c2 = this.compute_distance((Double[])mom.getGenotype().get("coords"), (Double[])child_2_genotype.get("coords"));
                 Double dad_c1 = this.compute_distance((Double[])dad.getGenotype().get("coords"), (Double[])child_1_genotype.get("coords"));
                 Double dad_c2 = this.compute_distance((Double[])dad.getGenotype().get("coords"), (Double[])child_2_genotype.get("coords"));
-
+                
                 if (mom_c1 + dad_c2 <= mom_c2 + dad_c1) {
                     if (child_1.getFitness() > mom.getFitness()) {
                         this.offspring.add(child_1);
@@ -195,6 +192,7 @@ public class EA {
 
     private HashMap<String, Object> mutate(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         params.put("evaluation", this.evaluation);
+        params.put("mutationRate", this.mutationRate);
         return ((MutationFunctionInterface)this.mutationDescriptor.get("call")).execute(genotype, params);
     }
 
@@ -212,6 +210,26 @@ public class EA {
 	        return previousBest;
 		} catch (NotEnoughEvaluationsException e) {
 			return previousBest;
+		}
+    }
+
+    public ArrayList<Individual> getImmigrants(Integer num_of_immigrant) {
+        try {
+			this.sortByFitness();        
+		} catch (NotEnoughEvaluationsException e) {
+            ;
+        }
+        
+        return new ArrayList<Individual>(this.population.subList(0, num_of_immigrant));
+    }
+
+    public void host(ArrayList<Individual> immigrants) {
+        try {
+            this.sortByFitness();
+            for (int i=1; i<=immigrants.size(); i++)         
+			    this.population.set(this.population.size()-i, immigrants.get(i-1));
+		} catch (NotEnoughEvaluationsException e) {
+            ;
 		}
     }
 
