@@ -1,5 +1,6 @@
 import numpy as np
 import subprocess
+import sys
 
 from random import randint, uniform
 
@@ -10,26 +11,26 @@ from random import randint, uniform
 POPULATION_SIZE = 80
 BEST_SIZE = 40
 SMOOTHING_COEFFICIENT = 10 # It is not clear from the paper but it should be the h parameter in the mutation operator.
-REPETITIONS = 15
+REPETITIONS = 20
 MAX_NUMBER_OF_VECTOR_TESTED = 5000
 
 """
     Search space for our parameters
 """
 
-N_PARAMETERS = 9
+N_PARAMETERS = 10
 
-BOUNDS_POPULATION_SIZE = (20, 300)
-BOUNDS_OFFSPRING_SIZE = (1, 1e4)
-BOUNDS_MUTATION_RATE = (1e-3, 1.0)
-BOUNDS_PARENTS_RATIO = (0.01, 1.0)
-BOUNDS_RS_SCALING_FACTOR = (1, 30)
-
-# THE BOUND FOR THE TOURNAMENT SELECTORS ARE DEPENDENT ON HOW MANY INDIVIDUAL THERE ARE (POP + OFFSPRING)
-
-BOUNDS_TAU = (1, 10)
-BOUNDS_TAU_PRIME = (1, 100)
-BOUNDS_MIN_STD = (0, 1.0)
+BOUNDS_POPULATION_SIZE = (100, 110)
+BOUNDS_OFFSPRING_SIZE = (4,13)
+BOUNDS_MUTATION_RATE = (0.1, 0.35)
+BOUNDS_PARENTS_RATIO = (0.3, 0.5)
+# BOUNDS_RS_S = (1.0001, 2.0)
+BOUNDS_RS_SCALING_FACTOR = (7,12)
+BOUNDS_TOURNAMENT_SIZE = (2,8)
+BOUNDS_RRTOURNAMENT_SIZE = (6, 9)
+BOUNDS_TAU = (0.6, 1.3)
+BOUNDS_TAU_PRIME = (0.6, 1.2)
+BOUNDS_MIN_STD = (0, 0.001)
 
 def initialize():
 
@@ -40,17 +41,14 @@ def initialize():
             randint(*BOUNDS_OFFSPRING_SIZE),
             uniform(*BOUNDS_MUTATION_RATE),
             uniform(*BOUNDS_PARENTS_RATIO),
+            # uniform(*BOUNDS_RS_S),
             uniform(*BOUNDS_RS_SCALING_FACTOR),
-            # -1, # tournament selector
-            -1, # RR tournament size
+            randint(*BOUNDS_TOURNAMENT_SIZE),
+            randint(*BOUNDS_RRTOURNAMENT_SIZE),
             uniform(*BOUNDS_TAU),
             uniform(*BOUNDS_TAU_PRIME),
             uniform(*BOUNDS_MIN_STD)
         ]
-
-        # sample the tournament size
-        ind[5] = randint(2, ind[0] + ind[1])
-        # ind[6] = randint(2, ind[0] + ind[1])
 
         population.append(ind)
 
@@ -60,6 +58,7 @@ def evaluate_individual(individual):
 
     # the result of the evaluation, i.e. the average performance is saved as last column in each parameter vector
     total_score = 0
+    scores = []
     for i in range(REPETITIONS):
         
         cmd = "\
@@ -68,29 +67,33 @@ def evaluate_individual(individual):
             -DoffspringSize={} \
             -DmutationRate={} \
             -DparentsRatio={} \
-            -DRSScalingFactor={} \
-            -DtournamentSize=0 \
+            -DRSscalingFactor={} \
+            -Ds=1.5 \
+            -DtournamentSize={} \
             -DRRtournamentSize={} \
             -Dtau={} \
             -DtauPrime={} \
             -DstdMin={} \
-            -jar testrun.jar -submission=player32 -evaluation=BentCigarFunction -seed=1".format(*individual)
+            -jar testrun.jar -submission=player32 -evaluation=SchaffersEvaluation -seed=1 2>&1 | tee islands_4.stderr".format(*individual)
 
         cmd = ' '.join(cmd.split())
         result = subprocess.run([cmd], 
                 universal_newlines=True,stderr=subprocess.PIPE,shell=True,stdout=subprocess.PIPE)
 
-        print(result.stderr)
-        idx_score = result.stdout.find("Score:")
-        score = (float)(result.stdout[idx_score+7:idx_score+23])
-        total_score += score
+        # sys.stderr.write(result.stdout)
+        # sys.stderr.flush()
 
-    avg_score = total_score / REPETITIONS
+        idx_score = result.stdout.find("Score:")
+        scores.append((float)((result.stdout[idx_score+7:]).split('\n')[0]))
+        print("Score: ", scores[-1])
+    
+    avg_score = np.mean(scores)
+    std_score = np.std(scores)
     individual.append(avg_score)
 
     # save results
-    with open("results.txt", 'a') as f:
-        f.write(','.join([str(i) for i in individual]) + '\n')
+    with open("islands_4.results", 'a') as f:
+        f.write(','.join([str(i) for i in individual] + [str(std_score)]) + '\n')
 
     return individual
 
@@ -144,6 +147,9 @@ def evolve(population):
     population = select_survivor(population, child)
 
 def main():
+
+    # subprocess.run(["bash compile.sh 3; rm stderr_1"], 
+    #             universal_newlines=True,stderr=subprocess.PIPE,shell=True,stdout=subprocess.PIPE)
     
     evaluation = POPULATION_SIZE
     population = initialize()
