@@ -76,6 +76,7 @@ public class player32 implements ContestSubmission
 		try {
 
 			Integer num_of_stopped_EA = 0;
+			Integer generation = 1;
 
         	while(true) {
 				for (String island_name : this.islands_names) {
@@ -107,10 +108,12 @@ public class player32 implements ContestSubmission
 				}
 
 				// Output
-				System.out.printf("Best individual after %6d evaluations:\n", this.evaluation.getCurrentEvaluationCount());
+				System.out.printf("Best individual after %6d evaluations (Gen. %d):\n", this.evaluation.getCurrentEvaluationCount(), generation);
 				for (String island_name : this.islands_names) {
 					System.out.printf("\t%s - %6.8f\n", island_name, this.EAs.get(island_name).getBestIndividual().getFitness());
 				}
+
+				generation++;
 			}
 		} catch (NotEnoughEvaluationsException e) {
 			// System.out.println(evaluation_.getFinalResult());
