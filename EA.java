@@ -221,10 +221,18 @@ public class EA {
 
     private Double compute_distance(Double[] coords_1, Double[] coords_2) {
         Double dist = 0.; 
-
-        // I do not compute the sqrt, since it is a monotonically crescent function.
-        for (int i=0; i<10; i++) dist += Math.pow(coords_1[i] - coords_2[i], 2);
-
+        for (int i=0; i<10; i++) dist += Math.sqrt(Math.pow(coords_1[i] - coords_2[i], 2));
         return dist;
+    }
+
+    public double computeDiversity() {
+        // use euclidean distance. Here performance are not a problem.
+        double diversity = 0;
+        for (Individual I_1 : this.population) {
+            for (Individual I_2 : this.population) {
+                diversity += this.compute_distance((Double[])I_1.getGenotype().get("coords"), (Double[])I_2.getGenotype().get("coords"));
+            }
+        }
+        return diversity;
     }
 }
