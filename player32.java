@@ -99,6 +99,7 @@ public class player32 implements ContestSubmission
     
 	public void run() {
 		Integer generation = 1;
+		HashMap<String, Double> islandDiversity = new HashMap<String, Double>();
 
 		if (!this.isMultimodal) {
 			String island_name = "Island_Bent_Cigar";
@@ -115,7 +116,7 @@ public class player32 implements ContestSubmission
 				while (true) {
 					this.EAs.get(island_name).evolve();
 					// System.out.printf("Best individual after %6d evaluations (Gen. %d): %6.8e\n", 
-						;//this.evaluation.getCurrentEvaluationCount(), generation, this.EAs.get(island_name).getBestIndividual().getFitness());
+						//this.evaluation.getCurrentEvaluationCount(), generation, this.EAs.get(island_name).getBestIndividual().getFitness());
 					generation++;
 				}
 			} catch (NotEnoughEvaluationsException e) {}
@@ -148,6 +149,18 @@ public class player32 implements ContestSubmission
 					else num_of_stopped_EA += 1;
 				}
 
+				// get the best performing island
+				String bestIsland = "";
+				double bestPerformance = 0.;
+				for (String island_name : this.islands_names) {
+					double islandPerformance = this.EAs.get(island_name).getBestIndividual().getFitness();
+					if ( islandPerformance - bestPerformance > 1e-5) {
+						bestPerformance = islandPerformance;
+						bestIsland = island_name;
+					}
+					islandDiversity.put(island_name, this.EAs.get(island_name).computeDiversity());
+				}
+
 				if (num_of_stopped_EA > 2) {
 					num_of_stopped_EA = 0;
 					// pick the best from each subpopulation and move them into the next subpopulations
@@ -159,8 +172,8 @@ public class player32 implements ContestSubmission
 						String dest_island;
 						dest_island = islands_names[(i+1) % islands_names.length];
 						this.EAs.get(dest_island).host(immigrants[i]);
-						dest_island = islands_names[(i-1)>=0 ? (i-1) : islands_names.length-1 ];
-						this.EAs.get(dest_island).host(immigrants[i]);
+						// dest_island = islands_names[(i-1)>=0 ? (i-1) : islands_names.length-1 ];
+						// this.EAs.get(dest_island).host(immigrants[i]);
 						
 						// allow evolution
 						this.manager.get(islands_names[i]).reset();
@@ -169,7 +182,11 @@ public class player32 implements ContestSubmission
 
 				System.out.printf("Best individual after %6d evaluations (Gen. %d):\n", this.evaluation.getCurrentEvaluationCount(), generation);
 				for (String island_name : this.islands_names) {
-					;System.out.printf("\t%s - %6.8f\n", island_name, this.EAs.get(island_name).getBestIndividual().getFitness());
+					System.out.printf("\t%s - %6.8f, diversity = %6.8f, best = %s\n", 
+						island_name, 
+						this.EAs.get(island_name).getBestIndividual().getFitness(),
+						islandDiversity.get(island_name), 
+						(island_name == bestIsland ? "yes" : ""));
 				}
 
 				generation++;
