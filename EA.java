@@ -148,38 +148,8 @@ public class EA {
             Individual child_1 = new Individual(this.evaluation, child_1_genotype);
             Individual child_2 = new Individual(this.evaluation, child_2_genotype);
 
-            if (this.apply_crowding) {
-                // compute distances
-                Double mom_c1 = this.compute_distance((Double[])mom.getGenotype().get("coords"), (Double[])child_1_genotype.get("coords"));
-                Double mom_c2 = this.compute_distance((Double[])mom.getGenotype().get("coords"), (Double[])child_2_genotype.get("coords"));
-                Double dad_c1 = this.compute_distance((Double[])dad.getGenotype().get("coords"), (Double[])child_1_genotype.get("coords"));
-                Double dad_c2 = this.compute_distance((Double[])dad.getGenotype().get("coords"), (Double[])child_2_genotype.get("coords"));
-                
-                if (mom_c1 + dad_c2 <= mom_c2 + dad_c1) {
-                    if (child_1.getFitness() > mom.getFitness()) {
-                        this.offspring.add(child_1);
-                        this.population.remove(mom_id);
-                    }
-                    if (child_2.getFitness() > dad.getFitness()) {
-                        this.offspring.add(child_2);
-                        this.population.remove(dad_id);
-                    }
-                }
-                else {
-                    if (child_1.getFitness() > dad.getFitness()) {
-                        this.offspring.add(child_1);
-                        this.population.remove(dad_id);
-                    }
-                    if (child_2.getFitness() > mom.getFitness()) {
-                        this.offspring.add(child_2);
-                        this.population.remove(mom_id);
-                    }
-                }
-            }
-            else {
-                offspring.add(child_1);
-                offspring.add(child_2);
-            }
+            offspring.add(child_1);
+            offspring.add(child_2);
         }
 
         return offspring;
@@ -219,8 +189,12 @@ public class EA {
 		} catch (NotEnoughEvaluationsException e) {
             ;
         }
-        
+        // ArrayList<Individual> migrants = new ArrayList<Individual>();
+        // for (int i=0; i<num_of_immigrant; i++) {
+        //     migrants.add(this.population.get(this.RNG.nextInt((int) (0.25 * this.population.size()))));
+        // }
         return new ArrayList<Individual>(this.population.subList(0, num_of_immigrant));
+        // return migrants;
     }
 
     public void host(ArrayList<Individual> immigrants) {
