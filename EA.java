@@ -25,6 +25,7 @@ public class EA {
     
     private Random RNG;
     private Individual previousBest;
+    private Integer num_of_evaluation;
 
     public EA(
         CompetitionCustomPack evaluation, 
@@ -54,6 +55,7 @@ public class EA {
         // helpers
         this.previousBest = null;
         this.RNG = new Random();
+        this.num_of_evaluation = this.populationSize;
 
         // initialize population
         this.population = new ArrayList<Individual>(this.populationSize);
@@ -110,6 +112,7 @@ public class EA {
         this.parents_ids  = this.selectParents_ids();
         this.offspring    = this.reproduce(this.parents_ids);
         this.population   = this.selectSurvivors(this.population, this.offspring);
+        this.num_of_evaluation += 2*this.offspringSize;
     }
 
     private ArrayList<Integer> selectParents_ids() throws NotEnoughEvaluationsException {
@@ -234,5 +237,9 @@ public class EA {
             }
         }
         return diversity;
+    }
+
+    public Integer getNumOfEvaluation() {
+        return this.num_of_evaluation;
     }
 }
