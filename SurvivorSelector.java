@@ -5,18 +5,23 @@ import java.util.Random;
 
 public class SurvivorSelector {
 
-    public static ArrayList<Individual> mu_plus_lambda(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params)  throws NotEnoughEvaluationsException {
-        assert offspring.size() >= population.size();
+    public static ArrayList<Individual> muLambda(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params)  throws NotEnoughEvaluationsException {
 
         CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
         Integer populationSize = (Integer) population.size();
 
-        population = SurvivorSelector.sortByFitness(evaluation, offspring);
+        population = SurvivorSelector.sortByFitness(evaluation, population);
+        offspring = SurvivorSelector.sortByFitness(evaluation, offspring);
+        offspring = new ArrayList<Individual>(population.subList(0, populationSize));
+        
+        // elitism 
+        offspring.set(populationSize-1, population.get(0));
+        population = offspring;
 
-        return new ArrayList<Individual>(population.subList(0, populationSize));
+        return population;
     }
 
-    public static ArrayList<Individual> mu_lambda(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params)  throws NotEnoughEvaluationsException {
+    public static ArrayList<Individual> muPlusLambda(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params)  throws NotEnoughEvaluationsException {
         
         CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
         Integer populationSize = (Integer) population.size();
@@ -34,7 +39,7 @@ public class SurvivorSelector {
         Integer populationSize = (Integer) population.size();
         Random rnd = new Random();
         ArrayList<Pair<Integer, Integer>> wins = new ArrayList<Pair<Integer, Integer>>();
-
+        
         population.addAll(offspring);
         population = SurvivorSelector.sortByFitness(evaluation, population);
 

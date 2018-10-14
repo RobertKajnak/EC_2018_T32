@@ -32,14 +32,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.lang.Math;
 
-public class Island_2A extends Island {
+public class Island_Bent_Cigar extends Island{
+    private  final String parentsSelectionOperatorName = "best_K_selector";
+    private  final String recombinationOperatorName = "onePointCrossover";
+    private  final String mutationOperatorName = "gaussian";
+    private  final String survivorSelectionOperatorName = "muPlusLambda";
 
-    private final String parentsSelectionOperatorName = "tournament_selector";
-    private final String recombinationOperatorName = "multiPointCrossover";
-    private final String mutationOperatorName = "uncorrelated_N_stepSizes";
-    private final String survivorSelectionOperatorName = "muPlusLambda";
-
-    public Island_2A(HashMap<String, Object> paramVector) {
+    public Island_Bent_Cigar(HashMap<String, Object> paramVector) {
         super(
             (Integer) paramVector.get("populationSize"),
             (Integer) paramVector.get("offspringSize"),
@@ -57,19 +56,19 @@ public class Island_2A extends Island {
         );
     }   
 
-    public HashMap<String, Object> getParentsSelectionDescriptor() {
+    public  HashMap<String, Object> getParentsSelectionDescriptor() {
         return getParentsSelectionDescriptor(parentsSelectionOperatorName);
     }
-    public HashMap<String, Object> getRecombinationDescriptor() {
+    public  HashMap<String, Object> getRecombinationDescriptor() {
         return getRecombinationDescriptor(recombinationOperatorName);
     }
-    public HashMap<String, Object> getMutationDescriptor() {
+    public  HashMap<String, Object> getMutationDescriptor() {
         return getMutationDescriptor(mutationOperatorName);
     }
-    public HashMap<String, Object> getSurvivorSelectionDescriptor() {
+    public  HashMap<String, Object> getSurvivorSelectionDescriptor() {
         return getSurvivorSelectionDescriptor(survivorSelectionOperatorName);
     }
-    public ArrayList<String> getIndividualDescriptor() {
+    public  ArrayList<String> getIndividualDescriptor() {
         return getIndividualDescriptor(recombinationOperatorName, mutationOperatorName);
     }
 }

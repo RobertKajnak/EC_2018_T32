@@ -26,7 +26,7 @@ public class EAHandler {
     }
 
     public Boolean allow_evolution() {
-        return this.num_of_generations_without_improvement <= 1500;
+        return this.num_of_generations_without_improvement <= 25;
     }
 
     public void reset() {

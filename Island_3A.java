@@ -34,24 +34,42 @@ import java.lang.Math;
 
 public class Island_3A extends Island {
 
-    private static final String parentsSelectionOperatorName = "ranking_selector";
-    private static final String recombinationOperatorName = "multiPointCrossover";
-    private static final String mutationOperatorName = "uncorrelated_N_stepSizes";
-    private static final String survivorSelectionOperatorName = "round_robin_tournament";
+    private final String parentsSelectionOperatorName = "ranking_selector";
+    private final String recombinationOperatorName = "multiPointCrossover";
+    private final String mutationOperatorName = "uncorrelated_N_stepSizes";
+    private final String survivorSelectionOperatorName = "muPlusLambda";
 
-    public static HashMap<String, Object> getParentsSelectionDescriptor() throws NotValidOperatorNameException {
+    public Island_3A(HashMap<String, Object> paramVector) {
+        super(
+            (Integer) paramVector.get("populationSize"),
+            (Integer) paramVector.get("offspringSize"),
+            (Double) paramVector.get("mutationRate"),
+            (Double) paramVector.get("parentsRatio"),
+            (Integer) paramVector.get("parents_tournamentSize"),
+            (Double) paramVector.get("s"),
+            (Double) paramVector.get("RS_factor"),
+            (Double) paramVector.get("tau"),
+            (Double) paramVector.get("tauPrime"),
+            (Double) paramVector.get("minStd"),
+            (Integer) paramVector.get("survivor_RR_tournamentSize"),
+            (Integer) paramVector.get("survivor_tournamentSize"),
+            (Integer) paramVector.get("parents_tournamentSize")
+        );
+    }   
+
+    public HashMap<String, Object> getParentsSelectionDescriptor() {
         return getParentsSelectionDescriptor(parentsSelectionOperatorName);
     }
-    public static HashMap<String, Object> getRecombinationDescriptor() throws NotValidOperatorNameException {
+    public HashMap<String, Object> getRecombinationDescriptor() {
         return getRecombinationDescriptor(recombinationOperatorName);
     }
-    public static HashMap<String, Object> getMutationDescriptor() throws NotValidOperatorNameException {
+    public HashMap<String, Object> getMutationDescriptor() {
         return getMutationDescriptor(mutationOperatorName);
     }
-    public static HashMap<String, Object> getSurvivorSelectionDescriptor() throws NotValidOperatorNameException {
+    public HashMap<String, Object> getSurvivorSelectionDescriptor() {
         return getSurvivorSelectionDescriptor(survivorSelectionOperatorName);
     }
-    public static ArrayList<String> getIndividualDescriptor() throws NotValidOperatorNameException {
+    public ArrayList<String> getIndividualDescriptor() {
         return getIndividualDescriptor(recombinationOperatorName, mutationOperatorName);
     }
 }

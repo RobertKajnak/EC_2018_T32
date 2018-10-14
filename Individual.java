@@ -1,6 +1,4 @@
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.util.Map;
 import java.util.HashMap;
 
@@ -34,7 +32,9 @@ class Individual implements Comparable<Individual>{
     	else {
             isSet = true;
             Double[] coords = (Double[]) this.genotype.get("coords");
-    		this.fitness = (double) evaluation.evaluate(ArrayUtils.toPrimitive(coords));
+            double[] coords_primitive = new double[10];
+            for (int i=0; i<10; i++) coords_primitive[i] = (double)coords[i];
+    		this.fitness = (double) evaluation.evaluate(coords_primitive);
     		return this.fitness;
     	}
     }

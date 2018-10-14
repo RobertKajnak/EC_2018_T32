@@ -29,11 +29,13 @@ public class Mutator {
         Random rnd = new Random();
         
         Double mutationRate = (Double) params.get("mutationRate");
-        Double sigma = (Double) params.get("sigma");
+        Double sigma = (Double) params.get("sigma"); 
+        Double alpha = 2.145378;
+        Double beta = 1.711925;
 
         if ( params.containsKey("variable") && (Boolean) params.get("variable")) {
             CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
-            sigma = sigma * Math.exp(-Math.pow(( (double) evaluation.getEvaluationLimit() - evaluation.evaluationsRemaining())/evaluation.getEvaluationLimit()*2, 2.8));
+            sigma = sigma * Math.exp(-Math.pow(beta * ( (double) evaluation.getEvaluationLimit() - evaluation.evaluationsRemaining())/evaluation.getEvaluationLimit(), alpha));
         }
         
         Double[] coords = (Double[]) genotype.get("coords");
@@ -72,7 +74,7 @@ public class Mutator {
     public static HashMap<String, Object> uncorrelated_N_stepSizes(HashMap<String, Object> genotype, HashMap<String, Object> params) {
         Random rnd = new Random();
 
-        Double min_std = (Double) params.get("min_std");
+        Double min_std = (Double) params.get("minStd");
         Double tau = (Double) params.get("tau");
         Double tauPrime = (Double) params.get("tauPrime");
         Double commonDistribution = tauPrime * rnd.nextGaussian();

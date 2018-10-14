@@ -35,25 +35,10 @@ import java.lang.Math;
 public class Island {
 
     /// EA GLOBAL PARAMETERS ///
-    protected static final Integer populationSize = Integer.parseInt(System.getProperty("populationSize"));;
-    protected static final Integer offspringSize = Integer.parseInt(System.getProperty("offspringSize"));;
-    protected static final Double mutationRate = Double.parseDouble(System.getProperty("mutationRate")); // percentage of offspring being mutated
-    protected static final Double parentsRatio = Double.parseDouble(System.getProperty("parentsRatio")); // percentage of the population that will reproduce
-    protected static final Boolean apply_crowding = true;
-
-    // /// Actual values for the following parameter are defined in each sub-class (island_1A, island_1B...)
-    // /// PARENTS SELECTION OPERATOR ///
-    // protected String parentsSelectionOperatorName = "";
-
-    // /// RECOMBINATION OPERATOR ///
-    // protected String recombinationOperatorName = "";
-
-    // /// MUTATION OPERATOR ///
-    // protected String mutationOperatorName = "";
-
-    // /// SURVIVOR SELECTION OPERATOR ///
-    // protected String survivorSelectionOperatorName = "";
-
+    protected final Integer populationSize;
+    protected final Integer offspringSize;
+    protected final Double mutationRate; // percentage of offspring being mutated
+    protected final Double parentsRatio; // percentage of the population that will reproduce
 
     // #### PARENTS SELECTION PARAMETERS ####
 
@@ -61,17 +46,19 @@ public class Island {
     // none
 
     // -<--- Fitness Proportional Selector --->-
-    protected static final String FPS_samplingMethod = "SUS";
+    protected final String FPS_samplingMethod;
 
     // -<--- Ranking Selector --->- 
-    protected static final String mapping = "linear";
-    protected static final Double s = Double.parseDouble(System.getProperty("s"));
-    protected static final Double base = 2.718;
-    protected static final Double ranking_scaling_factor = Double.parseDouble(System.getProperty("RSscalingFactor"));
-    protected static final String RS_samplingMethod = "SUS";
+    protected final String mapping;
+    protected final Double s;
+    protected final Double base;
+    protected final Double RS_factor;
+    protected final String RS_samplingMethod;
 
     // -<--- tournament_selector --->-
-    protected static final Integer parents_tournamentSize =  Integer.parseInt(System.getProperty("tournamentSize"));
+    protected final Integer parents_tournamentSize;
+    protected final Integer parents_RR_tournamentSize;
+
 
     // #### RECOMBINATION PARAMETERS ####
 
@@ -82,42 +69,41 @@ public class Island {
     // none
 
     // -<--- Multi-point Crossover --->-
-    protected static final Integer n_points = 3;
+    protected final Integer n_points;
 
     // -<--- Simple Arithmetic Crossover --->-
-    protected static final Double simpleCrossAlpha = 0.5;
+    protected final Double simpleCrossAlpha;
 
     // -<--- Single Arithmetic Crossover --->-
-    protected static final Double singleCrossAlpha = 0.5;
+    protected final Double singleCrossAlpha;
 
     // -<--- Whole Arithmetic Crossover --->-
-    protected static final Double wholeCrossAlpha = 0.2;
+    protected final Double wholeCrossAlpha;
 
     // -<--- Blend Arithmetic Crossover --->-
-    protected static final Double blendCrossAlpha = 0.5;
+    protected final Double blendCrossAlpha;
 
 
 
     // #### MUTATION PARAMETERS ####
 
     // -<--- Uniform Mutation --->-
-    protected static final Double width = 0.07; 
+    protected final Double uniformWidth; 
 
     // -<--- Gaussian Mutation --->-
-    protected static final Double sigma = 0.09;
-    protected static final Boolean variable = true;
+    protected final Double gaussianStd;
+    protected final Boolean variable;
 
     // -<--- Uncorrelated 1 stepSize Mutation --->-
-    protected static final Double one_step_tau = 1.0 / Math.sqrt(2 * Math.sqrt(10));
+    protected final Double oneStepTau;
 
     // -<--- Uncorrelated N stepSizes Mutation --->-
-    protected static final Double N_steps_tau = Double.parseDouble(System.getProperty("tau")) / Math.sqrt(2 * Math.sqrt(10));
-    protected static final Double tauPrime = Double.parseDouble(System.getProperty("tauPrime")) / Math.sqrt(2 * 10);
-    protected static final Double min_std =  Double.parseDouble(System.getProperty("stdMin"));
+    protected final Double tau;
+    protected final Double tauPrime;
+    protected final Double minStd;
 
     // -<--- Correlated N stepSizes Mutation --->-
     // none
-
     
     
     // #### SURVIVAL SELECTION PARAMETERS ####
@@ -129,21 +115,66 @@ public class Island {
     // none
 
     // -<--- round robin tournament --->-
-    protected static final Integer survivor_tournamentSize = Integer.parseInt(System.getProperty("RRtournamentSize"));;
+    protected final Integer survivor_RR_tournamentSize;
+    protected final Integer survivor_tournamentSize;
+    
 
-    public static HashMap<String, Object> getEAParams() {
+    public Island(
+        Integer populationSize,
+        Integer offspringSize,
+        Double mutationRate,
+        Double parentsRatio,
+        Integer parents_tournamentSize,
+        Double s,
+        Double RS_factor,
+        Double tau,
+        Double tauPrime,
+        Double minStd,
+        Integer survivor_RR_tournamentSize,
+        Integer survivor_tournamentSize,
+        Integer parents_RR_tournamentSize
+        ) {
+            this.populationSize = populationSize;
+            this.offspringSize = offspringSize;
+            this.mutationRate = mutationRate;
+            this.parentsRatio = parentsRatio;
+            this.parents_tournamentSize = parents_tournamentSize;
+            this.s = s;
+            this.RS_factor = RS_factor;
+            this.tau = tau / Math.sqrt(2 * Math.sqrt(10));
+            this.tauPrime = tauPrime / Math.sqrt(2 * 10);
+            this.minStd = minStd;
+            this.survivor_RR_tournamentSize = survivor_RR_tournamentSize;
+            this.survivor_tournamentSize = survivor_tournamentSize;
+            this.parents_RR_tournamentSize = parents_RR_tournamentSize;
+
+            this.FPS_samplingMethod = "SUS";
+            this.mapping = "linear";
+            this.base = 2.718;
+            this.RS_samplingMethod = "SUS";
+            this.n_points = 3;
+            this.simpleCrossAlpha = 0.5;
+            this.singleCrossAlpha = 0.5;
+            this.wholeCrossAlpha = 0.2;
+            this.blendCrossAlpha = 0.5;
+            this.uniformWidth = 0.07;
+            this.gaussianStd = 0.095139908; 
+            this.oneStepTau = tau / Math.sqrt(2 * Math.sqrt(10));
+            this.variable = true;
+        }
+
+    public HashMap<String, Object> getEAParams() {
         HashMap<String, Object> EAParams = new HashMap<String, Object>();
 
         EAParams.put("populationSize", populationSize);
         EAParams.put("mutationRate", mutationRate);	
         EAParams.put("offspringSize", offspringSize);
         EAParams.put("parentsRatio", parentsRatio);	
-        EAParams.put("apply_crowding", apply_crowding);
 
         return EAParams;
     }
 
-    public static HashMap<String, Object> getParentsSelectionDescriptor(String parentsSelectionOperatorName) throws NotValidOperatorNameException {
+    public HashMap<String, Object> getParentsSelectionDescriptor(String parentsSelectionOperatorName) {
         HashMap<String, Object> parentsSelectionDescriptor = new HashMap<String, Object>();
         HashMap<String, Object> params = new HashMap<String, Object>();
 
@@ -168,7 +199,7 @@ public class Island {
                 params.put("s", s);
                 params.put("base", base);
                 params.put("samplingMethod", RS_samplingMethod);
-                params.put("ranking_scaling_factor", ranking_scaling_factor);
+                params.put("RS_factor", RS_factor);
                 parentsSelectionDescriptor.put("call", new ParentsSelectionFunctionInterface() {
                     public ArrayList<Integer> execute(ArrayList<Individual> population, HashMap<String, Object> params) throws NotEnoughEvaluationsException{
                         return ParentsSelector.ranking_selector(population, params);}
@@ -181,8 +212,6 @@ public class Island {
                         return ParentsSelector.tournament_selector(population, params);}
                 });
                 break;
-            default:
-                throw new NotValidOperatorNameException("You did not provide a valid name for the parent selection operator.");
         }
 
         parentsSelectionDescriptor.put("params", params);
@@ -190,7 +219,7 @@ public class Island {
         return parentsSelectionDescriptor;
     }
 
-    public static HashMap<String, Object> getRecombinationDescriptor(String recombinationOperatorName) throws NotValidOperatorNameException {
+    public HashMap<String, Object> getRecombinationDescriptor(String recombinationOperatorName) {
         HashMap<String, Object> recombinationDescriptor = new HashMap<String, Object>();
         HashMap<String, Object> params = new HashMap<String, Object>();
 
@@ -244,8 +273,6 @@ public class Island {
                         {return Recombinator.blendCrossover(mom, dad, params);}
                 });
                 break;
-            default:
-                throw new NotValidOperatorNameException("You did not provide a valid name for the recombination operator.");
         }
 
         recombinationDescriptor.put("params", params);
@@ -253,7 +280,7 @@ public class Island {
         return recombinationDescriptor;
     }
 
-    public static HashMap<String, Object> getMutationDescriptor(String mutationOperatorName) throws NotValidOperatorNameException {
+    public HashMap<String, Object> getMutationDescriptor(String mutationOperatorName) {
         HashMap<String, Object> mutationDescriptor = new HashMap<String, Object>();
         HashMap<String, Object> params = new HashMap<String, Object>();
 
@@ -262,14 +289,14 @@ public class Island {
 
         switch (mutationOperatorName) {
             case "uniform":
-                params.put("width", width);
+                params.put("width", uniformWidth);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uniform(genotype, params);}
                 });
                 break;
             case "gaussian":
-                params.put("sigma", sigma);
+                params.put("sigma", gaussianStd);
                 params.put("variable", variable);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
@@ -277,16 +304,16 @@ public class Island {
                 });
                 break;
             case "uncorrelated_1_stepSize":
-                params.put("tau", one_step_tau);
+                params.put("tau", oneStepTau);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uncorrelated_1_stepSize(genotype, params);}
                 });
                 break;
             case "uncorrelated_N_stepSizes":
-                params.put("tau", N_steps_tau);
+                params.put("tau", tau);
                 params.put("tauPrime", tauPrime);
-                params.put("min_std", min_std);
+                params.put("minStd", minStd);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
                         {return Mutator.uncorrelated_N_stepSizes(genotype, params);}
@@ -298,8 +325,6 @@ public class Island {
                         {return Mutator.correlated_N_stepSizes(genotype, params);}
                 });
                 break;
-            default:
-                throw new NotValidOperatorNameException("You did not provide a valid name for the mutation operator.");
         }
 
         mutationDescriptor.put("params", params);
@@ -307,34 +332,32 @@ public class Island {
         return mutationDescriptor;
     }
 
-    public static HashMap<String, Object> getSurvivorSelectionDescriptor(String survivorSelectionOperatorName) throws NotValidOperatorNameException {
+    public HashMap<String, Object> getSurvivorSelectionDescriptor(String survivorSelectionOperatorName) {
         HashMap<String, Object> survivorSelectionDescriptor = new HashMap<String, Object>();
         HashMap<String, Object> params = new HashMap<String, Object>();
 
         params.put("operatorName", survivorSelectionOperatorName);
 
         switch (survivorSelectionOperatorName) {
-            case "mu_plus_lambda":
+            case "muPlusLambda":
                 survivorSelectionDescriptor.put("call", new SurvivorSelectionFunctionInterface() {
                 public ArrayList<Individual> execute(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
-                    return SurvivorSelector.mu_plus_lambda(population, offspring, params);}
+                    return SurvivorSelector.muPlusLambda(population, offspring, params);}
                 });
                 break;
-            case "mu_lambda":
+            case "muLambda":
                 survivorSelectionDescriptor.put("call", new SurvivorSelectionFunctionInterface() {
                 public ArrayList<Individual> execute(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
-                    return SurvivorSelector.mu_lambda(population, offspring, params);}
+                    return SurvivorSelector.muLambda(population, offspring, params);}
                 });
                 break;
             case "round_robin_tournament":
-                params.put("tournamentSize", survivor_tournamentSize);
+                params.put("tournamentSize", survivor_RR_tournamentSize);
                 survivorSelectionDescriptor.put("call", new SurvivorSelectionFunctionInterface() {
                 public ArrayList<Individual> execute(ArrayList<Individual> population, ArrayList<Individual> offspring, HashMap<String, Object> params) throws NotEnoughEvaluationsException {
                     return SurvivorSelector.round_robin_tournament(population, offspring, params);}
                 });
                 break;
-            default:
-                throw new NotValidOperatorNameException("You did not provide a valid name for the survivor selection operator.");
         }
 
         survivorSelectionDescriptor.put("params", params);
@@ -342,7 +365,7 @@ public class Island {
         return survivorSelectionDescriptor;
     }
 
-    public static ArrayList<String> getIndividualDescriptor(String recombinationOperatorName, String mutationOperatorName) throws NotValidOperatorNameException {
+    public ArrayList<String> getIndividualDescriptor(String recombinationOperatorName, String mutationOperatorName) {
         ArrayList<String> individualDescriptor = new ArrayList<String>();
         individualDescriptor.add("coords");
 
@@ -362,8 +385,6 @@ public class Island {
                 break;
             case "blendCrossover":
                 break;
-			default:
-				throw new NotValidOperatorNameException("You did not provide a valid name for the recombination operator.");
 		}
 
 		switch (mutationOperatorName) {
@@ -381,8 +402,6 @@ public class Island {
 				individualDescriptor.add("stepSizes");
                 individualDescriptor.add("alphas");
                 break;
-			default:
-				throw new NotValidOperatorNameException("You did not provide a valid name for the mutation operator.");
 		}
 
 		return individualDescriptor;
