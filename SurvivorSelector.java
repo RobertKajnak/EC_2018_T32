@@ -10,9 +10,9 @@ public class SurvivorSelector {
         CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
         Integer populationSize = (Integer) population.size();
 
-        population = SurvivorSelector.sortByFitness(evaluation, population);
+        // population = SurvivorSelector.sortByFitness(evaluation, population);
         offspring = SurvivorSelector.sortByFitness(evaluation, offspring);
-        offspring = new ArrayList<Individual>(population.subList(0, populationSize));
+        offspring = new ArrayList<Individual>(offspring.subList(0, populationSize));
         
         // elitism 
         offspring.set(populationSize-1, population.get(0));

@@ -37,7 +37,7 @@ def main():
 
     for key in info.keys():
         for i in range(num_runs):
-            pattern_metrics = r"(?<=Island_2B - )(?:.(?!n\\t))*".format(key)
+            pattern_metrics = r"(?<=" + key + r" - )(?:.(?!n\\t))*".format(key)
             island_info = re.findall(pattern_metrics, str(output[i]))
 
             if len(info[key].keys()) == 0:

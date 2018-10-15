@@ -114,7 +114,7 @@ public class ParentsSelector {
         Double base = (Double) params.get("base"); // It makes sense only when sampling method == exponential.
         String mapping = (String) params.get("mapping");
         String samplingMethod = (String) params.get("samplingMethod");
-        Double ranking_scaling_factor = (Double) params.get("ranking_scaling_factor"); 
+        Double ranking_scaling_factor = (Double) params.get("RS_factor"); 
         Integer parentsSize = (int) (parentsRatio * population.size());
 
         population = ParentsSelector.sortByFitness(evaluation, population);

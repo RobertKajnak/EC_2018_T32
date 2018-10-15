@@ -30,8 +30,8 @@ public class Mutator {
         
         Double mutationRate = (Double) params.get("mutationRate");
         Double sigma = (Double) params.get("sigma"); 
-        Double alpha = 2.145378;
-        Double beta = 1.711925;
+        Double alpha = (Double) params.get("alpha");
+        Double beta = (Double) params.get("beta");
 
         if ( params.containsKey("variable") && (Boolean) params.get("variable")) {
             CompetitionCustomPack evaluation = (CompetitionCustomPack) params.get("evaluation");
