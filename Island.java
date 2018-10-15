@@ -92,6 +92,8 @@ public class Island {
 
     // -<--- Gaussian Mutation --->-
     protected final Double gaussianStd;
+    protected final Double gaussianAlpha;
+    protected final Double gaussianBeta;
     protected final Boolean variable;
 
     // -<--- Uncorrelated 1 stepSize Mutation --->-
@@ -124,6 +126,9 @@ public class Island {
         Integer offspringSize,
         Double mutationRate,
         Double parentsRatio,
+        Double gaussianStd,
+        Double gaussianAlpha,
+        Double gaussianBeta,
         Integer parents_tournamentSize,
         Double s,
         Double RS_factor,
@@ -138,15 +143,25 @@ public class Island {
             this.offspringSize = offspringSize;
             this.mutationRate = mutationRate;
             this.parentsRatio = parentsRatio;
+            this.gaussianStd = gaussianStd;
+            this.gaussianAlpha = gaussianAlpha;
+            this.gaussianBeta = gaussianBeta;
             this.parents_tournamentSize = parents_tournamentSize;
             this.s = s;
             this.RS_factor = RS_factor;
-            this.tau = tau / Math.sqrt(2 * Math.sqrt(10));
-            this.tauPrime = tauPrime / Math.sqrt(2 * 10);
             this.minStd = minStd;
             this.survivor_RR_tournamentSize = survivor_RR_tournamentSize;
             this.survivor_tournamentSize = survivor_tournamentSize;
             this.parents_RR_tournamentSize = parents_RR_tournamentSize;
+
+            if (tau == null) this.tau = null;
+            else this.tau = tau / Math.sqrt(2 * Math.sqrt(10));
+
+            if (tauPrime == null) this.tauPrime = null;
+            else this.tauPrime = tauPrime / Math.sqrt(2 * 10);
+            
+            if (tau == null) this.oneStepTau = null;
+            else this.oneStepTau = tau / Math.sqrt(2 * Math.sqrt(10));
 
             this.FPS_samplingMethod = "SUS";
             this.mapping = "linear";
@@ -158,8 +173,6 @@ public class Island {
             this.wholeCrossAlpha = 0.2;
             this.blendCrossAlpha = 0.5;
             this.uniformWidth = 0.07;
-            this.gaussianStd = 0.095139908; 
-            this.oneStepTau = tau / Math.sqrt(2 * Math.sqrt(10));
             this.variable = true;
         }
 
@@ -297,6 +310,8 @@ public class Island {
                 break;
             case "gaussian":
                 params.put("sigma", gaussianStd);
+                params.put("alpha", gaussianAlpha);
+                params.put("beta", gaussianBeta);
                 params.put("variable", variable);
                 mutationDescriptor.put("call", new MutationFunctionInterface() {
                     public HashMap<String, Object> execute(HashMap<String, Object> genotype, HashMap<String, Object> params) 
