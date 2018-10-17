@@ -62,7 +62,7 @@ def evaluate_individual(individual):
             -Ds={} \
             -Dtau={} \
             -DtauPrime={} \
-            -DstdMin={} \
+            -DminStd={} \
             -jar testrun.jar -submission=player32 -evaluation=KatsuuraEvaluation -seed={} 2>&1 | tee ./Tuning/Katsuura_1.stderr".format(*individual, randint(0, 35154843))
 
         cmd = ' '.join(cmd.split())

@@ -186,18 +186,31 @@ public class EA {
 		}
     }
 
-    public ArrayList<Individual> getImmigrants(Integer num_of_immigrant) {
+    public ArrayList<Individual> getImmigrants(Integer num_of_immigrant, ArrayList<Individual> targetIslandPopulation) {
         try {
 			this.sortByFitness();        
 		} catch (NotEnoughEvaluationsException e) {
             ;
         }
-        // ArrayList<Individual> migrants = new ArrayList<Individual>();
-        // for (int i=0; i<num_of_immigrant; i++) {
-        //     migrants.add(this.population.get(this.RNG.nextInt((int) (0.25 * this.population.size()))));
-        // }
-        return new ArrayList<Individual>(this.population.subList(0, num_of_immigrant));
-        // return migrants;
+        ArrayList<Pair<Individual, Double>> pool_of_migrants = new ArrayList<Pair<Individual, Double>>();
+        for (int i=0; i<0.25 * this.population.size(); i++) {
+            Individual I = this.population.get(i);
+            double diversity = 0.0;
+            for (Individual targetIsland_I : targetIslandPopulation) {
+                diversity += this.compute_distance((Double [])I.getGenotype().get("coords"), (Double [])targetIsland_I.getGenotype().get("coords"));
+            }
+            pool_of_migrants.add(new Pair<Individual, Double>(I, diversity));
+        }
+
+        Collections.sort(pool_of_migrants);
+
+        ArrayList<Individual> migrants = new ArrayList<Individual>();
+        for (int i=0; i<num_of_immigrant; i++) {
+            migrants.add(pool_of_migrants.get(i).first());
+        }
+
+        // return new ArrayList<Individual>(this.population.subList(0, num_of_immigrant));
+        return migrants;
     }
 
     public void host(ArrayList<Individual> immigrants) {
@@ -236,7 +249,7 @@ public class EA {
                 diversity += this.compute_distance((Double[])I_1.getGenotype().get("coords"), (Double[])I_2.getGenotype().get("coords"));
             }
         }
-        return diversity;
+        return diversity/this.populationSize;
     }
 
     public Integer getNumOfEvaluation() {
