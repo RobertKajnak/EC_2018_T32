@@ -46,20 +46,23 @@ public class player32 implements ContestSubmission
         this.isSeparable = Boolean.parseBoolean(props.getProperty("Separable"));
 		
 		if (!this.isMultimodal && !this.hasStructure && !this.isSeparable) {
-			// System.out.println("Bent Cigar Function");
-			paramVector.put("populationSize", 110);
+			System.out.println("Bent Cigar Function");
+			paramVector.put("populationSize", 100);
 			paramVector.put("offspringSize", 2);
 			paramVector.put("mutationRate", 0.15);
 			paramVector.put("parentsRatio", 0.15);
-			paramVector.put("parents_tournamentSize", 7);
-			paramVector.put("s", 1.5);
-			paramVector.put("RS_factor", 10.52);
-			paramVector.put("tau", 0.686);
-			paramVector.put("tauPrime", 0.99);
-			paramVector.put("minStd", 0.0005);
-			paramVector.put("survivor_RR_tournamentSize", 9);
-			paramVector.put("survivor_tournamentSize", 7);
-			paramVector.put("parents_RR_tournamentSize", 2);
+			paramVector.put("gaussianStd", 0.095139908);
+			paramVector.put("gaussianAlpha", 2.145378);
+			paramVector.put("gaussianBeta", 1.711925);
+			paramVector.put("parents_tournamentSize", null);
+			paramVector.put("s", null);
+			paramVector.put("RS_factor", null);
+			paramVector.put("tau", null);
+			paramVector.put("tauPrime", null);
+			paramVector.put("minStd", null);
+			paramVector.put("survivor_RR_tournamentSize", null);
+			paramVector.put("survivor_tournamentSize", null);
+			paramVector.put("parents_RR_tournamentSize", null);
 		}
 		if (this.isMultimodal && this.hasStructure && !this.isSeparable) {
 			// System.out.println("Schaffers Function");
@@ -67,31 +70,37 @@ public class player32 implements ContestSubmission
 			paramVector.put("offspringSize", 10); // was 10
 			paramVector.put("mutationRate", null);
 			paramVector.put("parentsRatio", 0.49);
+			paramVector.put("gaussianStd", null);
+			paramVector.put("gaussianAlpha", null);
+			paramVector.put("gaussianBeta", null);
 			paramVector.put("parents_tournamentSize", 7);
+			paramVector.put("parents_RR_tournamentSize", null);
 			paramVector.put("s", 1.5);
-			paramVector.put("RS_factor", 10.52);
+			paramVector.put("RS_factor", null);
 			paramVector.put("tau", 0.686);
 			paramVector.put("tauPrime", 0.99);
 			paramVector.put("minStd", 0.0005);
-			paramVector.put("survivor_RR_tournamentSize", 9);
-			paramVector.put("survivor_tournamentSize", 7);
-			paramVector.put("parents_RR_tournamentSize", 2);
+			paramVector.put("survivor_RR_tournamentSize", null);
+			paramVector.put("survivor_tournamentSize", null);
 		}
 		if (this.isMultimodal && !this.hasStructure && !this.isSeparable) {
             // System.out.println("Katsuura Function"); 
 			paramVector.put("populationSize", 100);
-			paramVector.put("offspringSize", 100);
+			paramVector.put("offspringSize", Integer.parseInt(System.getProperty("offspringSize"))); 
 			paramVector.put("mutationRate", null);
-			paramVector.put("parentsRatio", 0.34);
-			paramVector.put("parents_tournamentSize", 4);
-			paramVector.put("s", 1.5);
-			paramVector.put("RS_factor", 9.69);
-			paramVector.put("tau", 1.040);
-			paramVector.put("tauPrime", 21.24);
-			paramVector.put("minStd", 0.0032);
-			paramVector.put("survivor_RR_tournamentSize", 3);
-			paramVector.put("survivor_tournamentSize", 2);
-			paramVector.put("parents_RR_tournamentSize", 2);
+			paramVector.put("parentsRatio", Double.parseDouble(System.getProperty("parentsRatio")));
+			paramVector.put("gaussianStd", null);
+			paramVector.put("gaussianAlpha", null);
+			paramVector.put("gaussianBeta", null);
+			paramVector.put("parents_tournamentSize", Integer.parseInt(System.getProperty("tournamentSize")));
+			paramVector.put("parents_RR_tournamentSize", null);
+			paramVector.put("s", Double.parseDouble(System.getProperty("s")));
+			paramVector.put("RS_factor", null);
+			paramVector.put("tau", Double.parseDouble(System.getProperty("tau")));
+			paramVector.put("tauPrime", Double.parseDouble(System.getProperty("tauPrime")));
+			paramVector.put("minStd", Double.parseDouble(System.getProperty("minStd")));
+			paramVector.put("survivor_RR_tournamentSize", null);
+			paramVector.put("survivor_tournamentSize", null);
 		}
 
 		this.getIslandsDescriptors();
@@ -100,6 +109,8 @@ public class player32 implements ContestSubmission
 	public void run() {
 		Integer generation = 1;
 		HashMap<String, Double> islandDiversity = new HashMap<String, Double>();
+		String bestIsland = "";
+		double bestPerformance = 0.;
 
 		if (!this.isMultimodal) {
 			String island_name = "Island_Bent_Cigar";
@@ -139,19 +150,20 @@ public class player32 implements ContestSubmission
 			Integer num_of_stopped_EA = 0;
 
 			while(true) {
+
 				for (String island_name : this.islands_names) {
 					if (this.manager.get(island_name).allow_evolution()) {
 						try {
 							this.EAs.get(island_name).evolve();
-						} catch (NotEnoughEvaluationsException e) {}				
+							// if (this.evaluation.getCurrentEvaluationCount() > 100000)
+							// 	throw new java.lang.ArrayIndexOutOfBoundsException();
+						} catch (NotEnoughEvaluationsException e) {}
 						this.manager.get(island_name).update(this.EAs.get(island_name));
 					}
 					else num_of_stopped_EA += 1;
 				}
 
 				// get the best performing island
-				String bestIsland = "";
-				double bestPerformance = 0.;
 				for (String island_name : this.islands_names) {
 					double islandPerformance = this.EAs.get(island_name).getBestIndividual().getFitness();
 					if ( islandPerformance - bestPerformance > 1e-5) {
@@ -166,11 +178,11 @@ public class player32 implements ContestSubmission
 					// pick the best from each subpopulation and move them into the next subpopulations
 					ArrayList<Individual>[] immigrants = new ArrayList[6];
 					for (int i=0; i<islands_names.length; i++) {
-						immigrants[i] = this.EAs.get(islands_names[i]).getImmigrants(5);
+						String dest_island = islands_names[(i+1) % islands_names.length];
+						immigrants[i] = this.EAs.get(islands_names[i]).getImmigrants(5, this.EAs.get(dest_island).getPopulation());
 					}
 					for (int i=0; i<islands_names.length; i++) {
-						String dest_island;
-						dest_island = islands_names[(i+1) % islands_names.length];
+						String dest_island = islands_names[(i+1) % islands_names.length];
 						this.EAs.get(dest_island).host(immigrants[i]);
 						// dest_island = islands_names[(i-1)>=0 ? (i-1) : islands_names.length-1 ];
 						// this.EAs.get(dest_island).host(immigrants[i]);
@@ -179,13 +191,14 @@ public class player32 implements ContestSubmission
 						this.manager.get(islands_names[i]).reset();
 					}
 				}
-
+				
 				System.out.printf("Best individual after %6d evaluations (Gen. %d):\n", this.evaluation.getCurrentEvaluationCount(), generation);
 				for (String island_name : this.islands_names) {
-					System.out.printf("\t%s - %6.8f, diversity = %6.8f, best = %s\n", 
+					System.out.printf("\t%s - %6.8f, diversity = %6.8f, evaluation = %d, best = %s\n", 
 						island_name, 
 						this.EAs.get(island_name).getBestIndividual().getFitness(),
 						islandDiversity.get(island_name), 
+						this.EAs.get(island_name).getNumOfEvaluation(),
 						(island_name == bestIsland ? "yes" : ""));
 				}
 

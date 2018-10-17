@@ -1,6 +1,7 @@
 import numpy as np
 import subprocess
 import sys
+import pickle 
 
 from random import randint, uniform
 
@@ -11,40 +12,32 @@ from random import randint, uniform
 POPULATION_SIZE = 80
 BEST_SIZE = 40
 SMOOTHING_COEFFICIENT = 10 # It is not clear from the paper but it should be the h parameter in the mutation operator.
-REPETITIONS = 20
+REPETITIONS = 10
 MAX_NUMBER_OF_VECTOR_TESTED = 5000
 
 """
     Search space for our parameters
 """
 
-N_PARAMETERS = 10
+N_PARAMETERS = 7
 
-BOUNDS_POPULATION_SIZE = (100, 110)
-BOUNDS_OFFSPRING_SIZE = (4,13)
-BOUNDS_MUTATION_RATE = (0.1, 0.35)
-BOUNDS_PARENTS_RATIO = (0.3, 0.5)
-# BOUNDS_RS_S = (1.0001, 2.0)
-BOUNDS_RS_SCALING_FACTOR = (7,12)
-BOUNDS_TOURNAMENT_SIZE = (2,8)
-BOUNDS_RRTOURNAMENT_SIZE = (6, 9)
-BOUNDS_TAU = (0.6, 1.3)
-BOUNDS_TAU_PRIME = (0.6, 1.2)
-BOUNDS_MIN_STD = (0, 0.001)
+BOUNDS_OFFSPRING_SIZE = (50, 150)
+BOUNDS_PARENTS_RATIO = (0.1, 0.8)
+BOUNDS_PARENTS_TOURNAMENT_SIZE = (2,30)
+BOUNDS_RS_S = (1.0, 2.0)
+BOUNDS_TAU = (0.5, 4.0)
+BOUNDS_TAU_PRIME = (10, 60.0)
+BOUNDS_MIN_STD = (0, 0.01)
 
 def initialize():
 
     population = []
     for i in range(POPULATION_SIZE):
         ind = [
-            randint(*BOUNDS_POPULATION_SIZE),
             randint(*BOUNDS_OFFSPRING_SIZE),
-            uniform(*BOUNDS_MUTATION_RATE),
             uniform(*BOUNDS_PARENTS_RATIO),
-            # uniform(*BOUNDS_RS_S),
-            uniform(*BOUNDS_RS_SCALING_FACTOR),
-            randint(*BOUNDS_TOURNAMENT_SIZE),
-            randint(*BOUNDS_RRTOURNAMENT_SIZE),
+            randint(*BOUNDS_PARENTS_TOURNAMENT_SIZE),
+            uniform(*BOUNDS_RS_S),
             uniform(*BOUNDS_TAU),
             uniform(*BOUNDS_TAU_PRIME),
             uniform(*BOUNDS_MIN_STD)
@@ -63,18 +56,14 @@ def evaluate_individual(individual):
         
         cmd = "\
             java \
-            -DpopulationSize={} \
             -DoffspringSize={} \
-            -DmutationRate={} \
             -DparentsRatio={} \
-            -DRSscalingFactor={} \
-            -Ds=1.5 \
             -DtournamentSize={} \
-            -DRRtournamentSize={} \
+            -Ds={} \
             -Dtau={} \
             -DtauPrime={} \
-            -DstdMin={} \
-            -jar testrun.jar -submission=player32 -evaluation=SchaffersEvaluation -seed=1 2>&1 | tee islands_4.stderr".format(*individual)
+            -DminStd={} \
+            -jar testrun.jar -submission=player32 -evaluation=KatsuuraEvaluation -seed={} 2>&1 | tee ./Tuning/Katsuura_1.stderr".format(*individual, randint(0, 35154843))
 
         cmd = ' '.join(cmd.split())
         result = subprocess.run([cmd], 
@@ -92,7 +81,7 @@ def evaluate_individual(individual):
     individual.append(avg_score)
 
     # save results
-    with open("islands_4.results", 'a') as f:
+    with open("./Tuning/Katsuura_1.results", 'a') as f:
         f.write(','.join([str(i) for i in individual] + [str(std_score)]) + '\n')
 
     return individual
@@ -126,7 +115,7 @@ def mutate(parents, child):
 
         child[param] = uniform(xA, xB)
 
-        if param in [0, 1, 5, 6]:
+        if param in [0, 2]:
             child[param] = int(round(child[param]))
 
     return child
@@ -145,6 +134,10 @@ def evolve(population):
     child = evaluate_individual(child)
     
     population = select_survivor(population, child)
+
+    # save population into a serialized file.
+    with open('./Tuning/Katsuura_1.pickle', 'wb') as f:
+        pickle.dump(population, f, pickle.HIGHEST_PROTOCOL)
 
 def main():
 
