@@ -24,8 +24,7 @@ def main():
     for i in range(num_runs):
         print("run: {}".format(i+1))
         output.append(run())
-    
-    # print(output)
+
     info = {
         "Island_1A" : {},
         "Island_2A" : {},
@@ -37,7 +36,7 @@ def main():
 
     for key in info.keys():
         for i in range(num_runs):
-            pattern_metrics = r"(?<=" + key + r" - )(?:.(?!n\\t))*".format(key)
+            pattern_metrics = r"(?<=" + key + r" - )(?:.(?!\\n|\\t))*(?:s|)"
             island_info = re.findall(pattern_metrics, str(output[i]))
 
             if len(info[key].keys()) == 0:
@@ -68,7 +67,6 @@ def main():
         evaluations = np.array(island_info["evaluations"])
         best = np.array(island_info["best"])
 
-        print(performance)
         mean_performance = np.mean(performance, axis=0)
         std_performance = np.std(performance, axis=0)
 
@@ -104,10 +102,10 @@ def main():
         #         curr_performance = island_info["performance"][i][perf_idx]
 
         for metric in ['performance', 'diversity', 'evaluations', 'best']:
-            with open('Results/{}_{}.csv'.format(key, metric), 'w') as f:
+            with open('Results/{}_{}.csv'.format(''.join(key.split('_')), metric), 'w') as f:
                 writer = csv.writer(f, delimiter=',',)
-                for mean,std in zip(island_info["mean_{}".format(metric)], island_info["std_{}".format(metric)]):
-                    writer.writerow([mean, std])
+                for i, stats in enumerate(zip(island_info["mean_{}".format(metric)], island_info["std_{}".format(metric)])):
+                    writer.writerow([i, stats[0], stats[1]])
 
 if __name__ == "__main__":
     main()
