@@ -17,7 +17,7 @@ def run():
     return p
 
 def main():
-    num_runs = 10
+    num_runs = 300
     output = []
     max_number_of_evaluations = 1e6
     
